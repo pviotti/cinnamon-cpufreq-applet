@@ -1,7 +1,0 @@
-{
-    "shell-version": ["3.2", "3.4"],
-    "uuid": "cpufreq-applet@yyc1992.gmail.com",
-    "name": "cpufreq-applet",
-    "url": "https://github.com/yuyichao/gnome-shell-cpufreq-applet",
-    "description": "Display and control cpu frequency in gnome-shell"
-}

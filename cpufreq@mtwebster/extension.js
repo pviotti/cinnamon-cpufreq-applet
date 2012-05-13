@@ -22,7 +22,6 @@
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
-const Shell = imports.gi.Shell;
 const Clutter = imports.gi.Clutter;
 
 const PanelMenu = imports.ui.panelMenu;
@@ -36,6 +35,7 @@ const FileUtils = imports.misc.fileUtils;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
+const Cinnamon = imports.gi.Cinnamon;
 
 let start = GLib.get_monotonic_time();
 global.log('cpufreq: start @ ' + start);
@@ -59,7 +59,7 @@ function parseInts(strs) {
     return rec;
 }
 function rd_frm_file(file) {
-    return Shell.get_file_contents_utf8_sync(file).replace(/\n/g, '').replace(/ +/g, ' ').replace(/ +$/g, '').split(' ');
+    return Cinnamon.get_file_contents_utf8_sync(file).replace(/\n/g, '').replace(/ +/g, ' ').replace(/ +$/g, '').split(' ');
 }
 function rd_nums_frm_file(file) {
     return parseInts(rd_frm_file(file));
