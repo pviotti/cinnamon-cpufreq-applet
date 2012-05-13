@@ -323,6 +323,7 @@ CpufreqSelector.prototype = {
 Signals.addSignalMethods(this);
 
 function add_cpus_frm_files(cpu_child) {
+    try {
     let pattern = /^cpu[0-9]+/
     for (let i in cpu_child)
         if (pattern.test(cpu_child[i].get_name()))
@@ -348,7 +349,7 @@ function add_cpus_frm_files(cpu_child) {
         for (let i in selectors)
             selectors[i].indicator.actor.visible = visible[i];
         summary.indicator.actor.visible = visible[-1];
-    });
+    }); } catch (e) { global.logError(e);}
 }
 
 function enable() {
