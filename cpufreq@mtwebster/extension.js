@@ -362,7 +362,7 @@ function disable() {
 function main() {
     let panel = Main.panel._rightBox;
     box = new St.BoxLayout({ pack_start: true });
-    panel.insert_child_at_index(box, 1);
+    panel.add_actor(box);
     panel.child_set(box, { y_fill: true });
     connect_to_schema('cpus-hidden', 'get_strv');
     connect_to_schema('digit-type', 'get_string');
@@ -380,6 +380,7 @@ function main() {
     global.log('cpufreq: use ' + (finish - start));
     log('cpufreq: use ' + (finish - start));
 }
+
 
 function init() {
     /* doing nothing */
