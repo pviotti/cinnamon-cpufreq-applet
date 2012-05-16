@@ -374,10 +374,12 @@ MyApplet.prototype = {
 
             try {
                 this.orientation = orientation;
-                let panel = Main.panel._rightBox;
-                box = new St.BoxLayout({ pack_start: true });
-                panel.add_actor(box);
-                panel.child_set(box, { y_fill: true });
+                this.myactor = new St.BoxLayout({ pack_start: true });
+                box = this.myactor;
+                this.actor.add(this.myactor);  
+                this.actor.reactive = global.settings.get_boolean("panel-edit-mode");            
+                global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
+
                 FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
                 let finish = GLib.get_monotonic_time();
                 global.log('cpufreq: finish @ ' + finish);
@@ -387,6 +389,10 @@ MyApplet.prototype = {
                 global.logError(e);
             }
         },
+        
+        on_panel_edit_mode_changed: function() {
+            this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
+        }
 
 
     };
