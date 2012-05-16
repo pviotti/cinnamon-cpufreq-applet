@@ -1,6 +1,6 @@
 {
     "uuid": "cpufreq@mtwebster",
-    "name": "CPU Frequency Extension",
-    "description": "Display and control cpu frequency in Cinnamon",
+    "name": "CPU Frequency Applet",
+    "description": "Display and control cpu frequency",
     "icon": "gnome-settings"
 }
