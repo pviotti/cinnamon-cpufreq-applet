@@ -36,6 +36,7 @@ const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
 const Cinnamon = imports.gi.Cinnamon;
+const Applet = imports.ui.applet;
 
 let start = GLib.get_monotonic_time();
 global.log('cpufreq: start @ ' + start);
@@ -360,29 +361,66 @@ function disable() {
     //nothing
 }
 
-function main() {
-    let panel = Main.panel._rightBox;
-    box = new St.BoxLayout({ pack_start: true });
-    panel.add_actor(box);
-    panel.child_set(box, { y_fill: true });
-    connect_to_schema('cpus-hidden', 'get_strv');
-    connect_to_schema('digit-type', 'get_string');
-    connect_to_schema('graph-width', 'get_int');
-    connect_to_schema('refresh-time', 'get_int');
-    connect_to_schema('show-text', 'get_boolean');
-    connect_to_schema('style', 'get_string');
-    connect_to_schema('background', 'get_string');
-    apply_settings.call(this, 'background', function(sender, value) {
-        Background.from_string(value);
-    });
-    FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
-    let finish = GLib.get_monotonic_time();
-    global.log('cpufreq: finish @ ' + finish);
-    global.log('cpufreq: use ' + (finish - start));
-    log('cpufreq: use ' + (finish - start));
+function main(metadata, orientation) {
+
+    
+    
+    
+    
+    let myApplet = new MyApplet(orientation);
+    return myApplet;      
+    
+    
+    
 }
 
 
 function init() {
     /* doing nothing */
 }
+
+function MyApplet(orientation) {
+    this._init(orientation);
+}
+
+MyApplet.prototype = {
+        __proto__: Applet.Applet.prototype,
+
+        _init: function(orientation) {        
+            Applet.Applet.prototype._init.call(this, orientation);
+            
+            try {                 
+                this.orientation = orientation;
+                let panel = Main.panel._rightBox;
+                box = new St.BoxLayout({ pack_start: true });
+                panel.add_actor(box);
+                panel.child_set(box, { y_fill: true });
+                connect_to_schema('cpus-hidden', 'get_strv');
+                connect_to_schema('digit-type', 'get_string');
+                connect_to_schema('graph-width', 'get_int');
+                connect_to_schema('refresh-time', 'get_int');
+                connect_to_schema('show-text', 'get_boolean');
+                connect_to_schema('style', 'get_string');
+                connect_to_schema('background', 'get_string');
+                apply_settings.call(this, 'background', function(sender, value) {
+                    Background.from_string(value);
+                });
+                FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
+                let finish = GLib.get_monotonic_time();
+                global.log('cpufreq: finish @ ' + finish);
+                global.log('cpufreq: use ' + (finish - start));
+                log('cpufreq: use ' + (finish - start));                
+                
+                
+                
+                
+                
+                
+            }
+            catch (e) {
+                global.logError(e);
+            }
+        },
+
+
+    };
