@@ -37,6 +37,10 @@ const Mainloop = imports.mainloop;
 const Signals = imports.signals;
 const Cinnamon = imports.gi.Cinnamon;
 const Applet = imports.ui.applet;
+const UUID = 'cpufreq@mtwebster';
+const AppletDir = imports.ui.appletManager.applets[UUID];
+const AppletSettings = AppletDir.appletSettings;
+const AppletSettingsUI = AppletDir.appletSettingsUI;
 
 let start = GLib.get_monotonic_time();
 global.log('cpufreq: start @ ' + start);
@@ -45,6 +49,11 @@ let cpus = [];
 let selectors = [];
 let box;
 let summary;
+let summary_only = false;
+let refresh_time = 2000;
+
+const DEFAULT_STYLE = ['Display Style', 'Both'];
+const DEFAULT_DIGIT_TYPE = ['Digit Type', 'Frequency'];
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
@@ -103,20 +112,6 @@ function num_to_color(num, max) {
     return percent_to_hex('#00FF%2x', 1 - num);
 }
 
-//signal functions
-function reemit(schema, key, func) {
-    settings[key] = schema[func](key);
-    emit(key, settings[key]);
-}
-function connect_to_schema(key, func) {
-    reemit(Schema, key, func);
-    Schema.connect('changed::' + key, Lang.bind(this, reemit, func));
-}
-function apply_settings(key, func) {
-    func.call(this, null, settings[key]);
-    connect(key, Lang.bind(this, func));
-}
-
 function Panel_Indicator() {
     this._init.apply(this, arguments);
 }
@@ -125,6 +120,13 @@ Panel_Indicator.prototype = {
 
     _init: function(name, parent) {
         PanelMenu.Button.prototype._init.call(this, 0.0);
+        
+        this.settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf', 'cpufreq.conf');
+
+        Background.from_string(this.settings.getString('Background','#FFFFFF80'));
+        summary_only = this.settings.getBoolean('Summary only', false);
+        refresh_time = parseInt(this.settings.getString('Refresh Time', '2000'));
+        
         this.actor.has_tooltip = true;
         this.actor.tooltip_text = name;
         this.actor.remove_style_class_name('panel-button');
@@ -140,31 +142,34 @@ Panel_Indicator.prototype = {
         this.box.connect('show', Lang.bind(this.graph, function() {
             this.queue_repaint();
         }));
-        apply_settings.call(this, 'show-text', function(sender, value) {
-            this.label.visible = value;
-        });
-        apply_settings.call(this, 'style', function(sender, value) {
-            this.digit.visible = value == 'digit' || value == 'both';
-            this.graph.visible = value == 'graph' || value == 'both';
-        });
-        apply_settings.call(this, 'graph-width', function(sender, value) {
-            this.graph.width = value;
-        });
+
+        this.label.visible = false; // override for now - show-text
+
+        let style = this.settings.getComboArray('Display Style', DEFAULT_STYLE);
+        this.digit.visible = style[1] == 'Digit' || style[1] == 'Both';
+        this.graph.visible = style[1] == 'Graph' || style[1] == 'Both';
+
+        this.graph.width = this.settings.getString('Graph Width', '6'); 
+
         this.box.add_actor(this.label);
         this.box.add_actor(this.graph);
         this.box.add_actor(this.digit);
         this.actor.add_actor(this.box);
         this.add_menu_items();
-        apply_settings.call(this, 'digit-type', function(sender, value) {
-            this.set_digit = value == 'frequency' ? function () {
-                this.digit.text = num_to_freq_panel(this._parent.avg_freq);
-            } : function () {
-                this.digit.text = Math.round(this._parent.avg_freq / this._parent.max * 100) + ' %';
-            };
-            this._onChange();
-        });
+
+        let digittype = this.settings.getComboArray('Digit Type', DEFAULT_DIGIT_TYPE);
+
+        this.set_digit = digittype[1] == 'Frequency' ? function () {
+            this.digit.text = num_to_freq_panel(this._parent.avg_freq);
+        } : function () {
+            this.digit.text = Math.round(this._parent.avg_freq / this._parent.max * 100) + ' %';
+        };
+
+        this._onChange();
         this._parent.connect('cur-changed', Lang.bind(this, this._onChange));
+
     },
+
     _draw: function() {
         if ((this.graph.visible || this.box.visible) == false) return;
         let [width, heigth] = this.graph.get_surface_size();
@@ -229,11 +234,9 @@ CpufreqSelectorBase.prototype = {
         this.get_avail();
         this.get_cur();
         this.indicator = new Panel_Indicator(cpu, this);
-        apply_settings.call(this, 'refresh-time', function(sender, value) {
-            if ('timeout' in this)
-                Mainloop.source_remove(this.timeout);
-            this.timeout = Mainloop.timeout_add(value, Lang.bind(this, this.update));
-        });
+        if ('timeout' in this)
+            Mainloop.source_remove(this.timeout);
+        this.timeout = Mainloop.timeout_add(refresh_time, Lang.bind(this, this.update));
     },
 
     get_avail: function() {
@@ -337,46 +340,26 @@ function add_cpus_frm_files(cpu_child) {
     summary = new CpufreqSelector('cpu');
     box.add_actor(summary.indicator.actor);
     Main.panel._menus.addMenu(summary.indicator.menu);
-    apply_settings.call(this, 'cpus-hidden', function(sender, value) {
-        let visible = [];
-        for (let i in selectors)
-            visible[i] = true;
-        visible[-1] = true;
-        for (let i in value) {
-            value[i] = value[i].replace(/^cpu/, '');
-            if (value[i] in visible)
-                visible[value[i]] = false;
+    let visible = [];
+    for (let i in selectors)
+        visible[i] = true;
+    visible[-1] = true;
+    if (summary_only) {
+        for (let i = 0; i < visible.length; i++) {
+            visible[i] = false;
         }
-        for (let i in selectors)
-            selectors[i].indicator.actor.visible = visible[i];
-        summary.indicator.actor.visible = visible[-1];
-    }); } catch (e) { global.logError(e);}
-}
-
-function enable() {
-    main();
-}
-
-function disable() {
-    //nothing
+    }
+    for (let i in selectors)
+        selectors[i].indicator.actor.visible = visible[i];
+    summary.indicator.actor.visible = visible[-1];
+    } catch (e) {
+        global.logError(e);
+    }
 }
 
 function main(metadata, orientation) {
-
-    
-    
-    
-    
     let myApplet = new MyApplet(orientation);
-    return myApplet;      
-    
-    
-    
-}
-
-
-function init() {
-    /* doing nothing */
+    return myApplet;
 }
 
 function MyApplet(orientation) {
@@ -388,36 +371,19 @@ MyApplet.prototype = {
 
         _init: function(orientation) {        
             Applet.Applet.prototype._init.call(this, orientation);
-            
-            try {                 
+
+            try {
                 this.orientation = orientation;
                 let panel = Main.panel._rightBox;
                 box = new St.BoxLayout({ pack_start: true });
                 panel.add_actor(box);
                 panel.child_set(box, { y_fill: true });
-                connect_to_schema('cpus-hidden', 'get_strv');
-                connect_to_schema('digit-type', 'get_string');
-                connect_to_schema('graph-width', 'get_int');
-                connect_to_schema('refresh-time', 'get_int');
-                connect_to_schema('show-text', 'get_boolean');
-                connect_to_schema('style', 'get_string');
-                connect_to_schema('background', 'get_string');
-                apply_settings.call(this, 'background', function(sender, value) {
-                    Background.from_string(value);
-                });
                 FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
                 let finish = GLib.get_monotonic_time();
                 global.log('cpufreq: finish @ ' + finish);
                 global.log('cpufreq: use ' + (finish - start));
-                log('cpufreq: use ' + (finish - start));                
-                
-                
-                
-                
-                
-                
-            }
-            catch (e) {
+                log('cpufreq: use ' + (finish - start));
+            } catch (e) {
                 global.logError(e);
             }
         },
