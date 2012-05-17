@@ -52,6 +52,7 @@ let summary;
 
 const DEFAULT_STYLE = ['Display Style', 'Both'];
 const DEFAULT_DIGIT_TYPE = ['Digit Type', 'Frequency'];
+const DEFAULT_CPUS = ['CPUs to Monitor', 'Summary+Individual', '0'];
 // global settings variables;
 
 let settings;
@@ -62,6 +63,7 @@ let background = '#FFFFFF80';
 let style = DEFAULT_STYLE;
 let graph_width = '6';
 let digit_type = DEFAULT_DIGIT_TYPE;
+let cpus_to_monitor = DEFAULT_CPUS;
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
@@ -137,7 +139,8 @@ Panel_Indicator.prototype = {
     
     initSettings: function() {
         background = settings.getString('Background','#FFFFFF80');
-        summary_only = settings.getBoolean('Summary only', false);
+  //      summary_only = settings.getBoolean('Summary only', false);
+        cpus_to_monitor = settings.getComboArray('CPUs to Monitor', DEFAULT_CPUS);
         refresh_time = parseInt(settings.getString('Refresh Time', '2000'));
         style = settings.getComboArray('Display Style', DEFAULT_STYLE);
         graph_width = settings.getString('Graph Width', '6');
@@ -240,10 +243,10 @@ Panel_Indicator.prototype = {
         }
         this.settings_menu = new AppletSettingsUI.SettingsMenu('Settings');
 
-        this.summary_switch = new AppletSettingsUI.SwitchSetting(settings, 'Summary only');
+        this.cpus_to_monitor = new AppletSettingsUI.ComboSetting(settings, 'CPUs to Monitor');
         this.display_style = new AppletSettingsUI.ComboSetting(settings, 'Display Style');
         this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
-        this.settings_menu.addSetting(this.summary_switch.getSwitch());
+        this.settings_menu.addSetting(this.cpus_to_monitor.getComboBox());
         this.settings_menu.addSetting(this.display_style.getComboBox());
         this.settings_menu.addSetting(this.digit_type.getComboBox());
         this.settings_menu.addBreak();
@@ -378,10 +381,17 @@ function add_cpus_frm_files(cpu_child) {
     for (let i in selectors)
         visible[i] = true;
     visible[-1] = true;
-    if (summary_only) {
-        for (let i = 0; i < visible.length; i++) {
-            visible[i] = false;
-        }
+    switch (parseInt(cpus_to_monitor[2])) {
+        case 0:
+            break;
+        case 1:
+            for (let i = 0; i < visible.length; i++) {
+                visible[i] = false;
+            }
+            break;
+        case 2:
+            visible[-1] = false;
+            break;
     }
     for (let i in selectors)
         selectors[i].indicator.actor.visible = visible[i];
