@@ -1,0 +1,22 @@
+Display Style, Digit
+Display Style, Graph
+Display Style, Both
+Display Style_CHOICE, 2
+
+Digit Type, Frequency
+Digit Type, Percentage
+Digit Type_CHOICE, 0
+
+CPUs to Monitor_CHOICE, 0
+CPUs to Monitor, Summary+Individual, 0
+CPUs to Monitor, Summary Only, 1
+CPUs to Monitor, Individual Only, 2
+
+Refresh Time, 2000
+Graph Width, 4
+Background, #FFFFFF80
+
+Low Color, green
+Med Color, yellow
+High Color, red
+Text Color, white
