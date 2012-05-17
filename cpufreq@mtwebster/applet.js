@@ -219,6 +219,19 @@ Panel_Indicator.prototype = {
                 this._parent.set(item.type ,item.id);
             }));
         }
+        this.settings_menu = new AppletSettingsUI.SettingsMenu('Settings');
+
+        this.summary_switch = new AppletSettingsUI.SwitchSetting(this.settings, 'Summary only');
+        this.display_style = new AppletSettingsUI.ComboSetting(this.settings, 'Display Style');
+        this.settings_menu.addSetting(this.summary_switch.getSwitch());
+        this.settings_menu.addSetting(this.display_style.getComboBox());
+        this.settings_menu.addBreak();
+   //     this.settings_menu.addSetting(this.edit_menu_item);
+    //    this.settings_menu.addSetting(this.defaults_menu_item);
+
+        this.menu.addMenuItem(this.settings_menu);
+
+     //   this.settings.connect('settings-file-changed', Lang.bind(this, this._reload));
 
     }
 };
