@@ -49,11 +49,19 @@ let cpus = [];
 let selectors = [];
 let box;
 let summary;
-let summary_only = false;
-let refresh_time = 2000;
 
 const DEFAULT_STYLE = ['Display Style', 'Both'];
 const DEFAULT_DIGIT_TYPE = ['Digit Type', 'Frequency'];
+// global settings variables;
+
+let settings;
+
+let summary_only = false;
+let refresh_time = 2000;
+let background = '#FFFFFF80';
+let style = DEFAULT_STYLE;
+let graph_width = '6';
+let digit_type = DEFAULT_DIGIT_TYPE;
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
@@ -120,20 +128,31 @@ Panel_Indicator.prototype = {
 
     _init: function(name, parent) {
         PanelMenu.Button.prototype._init.call(this, 0.0);
+        this.name = name
+        this._parent = parent;
         
-        this.settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf', 'cpufreq.conf');
+        let a = this.initSettings();
+        this.buildit();
+    },
+    
+    initSettings: function() {
+        background = settings.getString('Background','#FFFFFF80');
+        summary_only = settings.getBoolean('Summary only', false);
+        refresh_time = parseInt(settings.getString('Refresh Time', '2000'));
+        style = settings.getComboArray('Display Style', DEFAULT_STYLE);
+        graph_width = settings.getString('Graph Width', '6');
+        digit_type = settings.getComboArray('Digit Type', DEFAULT_DIGIT_TYPE);
+    },
+    
+    buildit: function() {
 
-        Background.from_string(this.settings.getString('Background','#FFFFFF80'));
-        summary_only = this.settings.getBoolean('Summary only', false);
-        refresh_time = parseInt(this.settings.getString('Refresh Time', '2000'));
-        
+        Background.from_string(background);
         this.actor.has_tooltip = true;
-        this.actor.tooltip_text = name;
+        this.actor.tooltip_text = this.name;
         this.actor.remove_style_class_name('panel-button');
         this.actor.add_style_class_name('cfs-panel-button');
-        this._parent = parent;
         this.color = new Clutter.Color();
-        this.label = new St.Label({ text: name, style_class: 'cfs-label'});
+        this.label = new St.Label({ text: this.name, style_class: 'cfs-label'});
         this.digit = new St.Label({ style_class: 'cfs-panel-value' });
         this.graph = new St.DrawingArea({reactive: false});
         this.graph.height = height;
@@ -145,11 +164,11 @@ Panel_Indicator.prototype = {
 
         this.label.visible = false; // override for now - show-text
 
-        let style = this.settings.getComboArray('Display Style', DEFAULT_STYLE);
+        
         this.digit.visible = style[1] == 'Digit' || style[1] == 'Both';
         this.graph.visible = style[1] == 'Graph' || style[1] == 'Both';
 
-        this.graph.width = this.settings.getString('Graph Width', '6'); 
+        this.graph.width = graph_width;  
 
         this.box.add_actor(this.label);
         this.box.add_actor(this.graph);
@@ -157,9 +176,7 @@ Panel_Indicator.prototype = {
         this.actor.add_actor(this.box);
         this.add_menu_items();
 
-        let digittype = this.settings.getComboArray('Digit Type', DEFAULT_DIGIT_TYPE);
-
-        this.set_digit = digittype[1] == 'Frequency' ? function () {
+        this.set_digit = digit_type[1] == 'Frequency' ? function () {
             this.digit.text = num_to_freq_panel(this._parent.avg_freq);
         } : function () {
             this.digit.text = Math.round(this._parent.avg_freq / this._parent.max * 100) + ' %';
@@ -169,7 +186,7 @@ Panel_Indicator.prototype = {
         this._parent.connect('cur-changed', Lang.bind(this, this._onChange));
 
     },
-
+    
     _draw: function() {
         if ((this.graph.visible || this.box.visible) == false) return;
         let [width, heigth] = this.graph.get_surface_size();
@@ -183,6 +200,7 @@ Panel_Indicator.prototype = {
         cr.rectangle(0, height * (1 - value), width, height);
         cr.fill();
     },
+
     _onChange: function() {
         for (let i in this.menu_items) {
             let type = this.menu_items[i].type;
@@ -192,6 +210,7 @@ Panel_Indicator.prototype = {
         this.set_digit();
         this.graph.queue_repaint();
     },
+
     add_menu_items: function() {
         this.menu_items = [];
         for (let i in this._parent.avail_freqs) {
@@ -221,17 +240,19 @@ Panel_Indicator.prototype = {
         }
         this.settings_menu = new AppletSettingsUI.SettingsMenu('Settings');
 
-        this.summary_switch = new AppletSettingsUI.SwitchSetting(this.settings, 'Summary only');
-        this.display_style = new AppletSettingsUI.ComboSetting(this.settings, 'Display Style');
+        this.summary_switch = new AppletSettingsUI.SwitchSetting(settings, 'Summary only');
+        this.display_style = new AppletSettingsUI.ComboSetting(settings, 'Display Style');
+        this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
         this.settings_menu.addSetting(this.summary_switch.getSwitch());
         this.settings_menu.addSetting(this.display_style.getComboBox());
+        this.settings_menu.addSetting(this.digit_type.getComboBox());
         this.settings_menu.addBreak();
    //     this.settings_menu.addSetting(this.edit_menu_item);
     //    this.settings_menu.addSetting(this.defaults_menu_item);
 
         this.menu.addMenuItem(this.settings_menu);
 
-     //   this.settings.connect('settings-file-changed', Lang.bind(this, this._reload));
+
 
     }
 };
@@ -370,6 +391,8 @@ function add_cpus_frm_files(cpu_child) {
     }
 }
 
+
+
 function main(metadata, orientation) {
     let myApplet = new MyApplet(orientation);
     return myApplet;
@@ -387,9 +410,47 @@ MyApplet.prototype = {
 
             try {
                 this.orientation = orientation;
+                settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf.dist', 'cpufreq.conf');
+                settings.connect('settings-file-changed', Lang.bind(this, this.rebuild));
+                this.rebuild();
+                
+            } catch (e) {
+                global.logError(e);
+            }
+        },
+        
+        go: function() {
+            try {
+            this.myactor = new St.BoxLayout({ pack_start: true });
+            box = this.myactor;
+            this.actor.add(this.myactor);  
+            this.actor.reactive = global.settings.get_boolean("panel-edit-mode");            
+            global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
+            FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
+            let finish = GLib.get_monotonic_time();
+            global.log('cpufreq: finish @ ' + finish);
+            global.log('cpufreq: use ' + (finish - start));
+            log('cpufreq: use ' + (finish - start)); } catch (e) {
+                global.logError(e);
+            }
+        },
+        
+        rebuild: function() {
+            try {
+            this.actor.remove_actor(this.myactor);
+            box.destroy();
+            this.myactor.destroy();
+            cpus = [];
+            selectors = [];
+            } catch (e) {
+                global.logError(e);
+            }
+            
+            try {
                 this.myactor = new St.BoxLayout({ pack_start: true });
                 box = this.myactor;
                 this.actor.add(this.myactor);  
+                
                 this.actor.reactive = global.settings.get_boolean("panel-edit-mode");            
                 global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
 
@@ -397,10 +458,12 @@ MyApplet.prototype = {
                 let finish = GLib.get_monotonic_time();
                 global.log('cpufreq: finish @ ' + finish);
                 global.log('cpufreq: use ' + (finish - start));
-                log('cpufreq: use ' + (finish - start));
-            } catch (e) {
-                global.logError(e);
-            }
+                log('cpufreq: use ' + (finish - start)); } catch (e) {
+                    global.logError(e);
+                }
+            
+        //    this.go();
+           
         },
         
         on_panel_edit_mode_changed: function() {

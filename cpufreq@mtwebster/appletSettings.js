@@ -61,8 +61,8 @@ AppletSettings.prototype = {
                     fp.close(null);
                 }
                 let f = this.settings_file;
-                this.settings_file_monitor = f.monitor_file(Gio.FileMonitorFlags.NONE, null);
-                this.settings_file_monitor.connect('changed', Lang.bind(this, this._on_settings_file_changed));
+           //     this.settings_file_monitor = f.monitor_file(Gio.FileMonitorFlags.NONE, null);
+           //     this.settings_file_monitor.connect('changed', Lang.bind(this, this._on_settings_file_changed));
                 this.readSettings();
             } catch (e) {
                 global.logError(e);
@@ -122,6 +122,7 @@ AppletSettings.prototype = {
                     }
                 }
                 writer.close(null);
+                this._on_settings_file_changed();
             } catch (e) {
                 global.logError(e);
             }
