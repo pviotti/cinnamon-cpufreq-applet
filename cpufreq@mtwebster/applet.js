@@ -41,6 +41,7 @@ const UUID = 'cpufreq@mtwebster';
 const AppletDir = imports.ui.appletManager.applets[UUID];
 const AppletSettings = AppletDir.appletSettings;
 const AppletSettingsUI = AppletDir.appletSettingsUI;
+const ColorSlider = AppletDir.colorSlider;
 
 let start = GLib.get_monotonic_time();
 global.log('cpufreq: start @ ' + start);
@@ -256,7 +257,7 @@ Panel_Indicator.prototype = {
         this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
         this.width_slider = new PopupMenu.PopupSliderMenuItem(graph_width/20);
         this.width_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        this.text_color_slider = new AppletSettingsUI.ColorSliderMenuItem(h2d(text_color)/DEC_WHITE);
+        this.text_color_slider = new ColorSlider.ColorSliderMenuItem(h2d(text_color)/DEC_WHITE);
         this.text_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
         
         
