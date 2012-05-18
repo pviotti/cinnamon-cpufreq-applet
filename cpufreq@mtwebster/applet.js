@@ -64,14 +64,23 @@ let style = DEFAULT_STYLE;
 let graph_width = '6';
 let digit_type = DEFAULT_DIGIT_TYPE;
 let cpus_to_monitor = DEFAULT_CPUS;
+let text_color = '#FFFF80';
+let low_color = '#00FF00'; // green
+let mid_color = '#FFFF00'; // yellow
+let hi_color = '#FF0000'; // red
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
 const Schema = new Gio.Settings({ schema: 'org.gnome.shell.extensions.cpufreq' });
 const height = Math.round(Panel.PANEL_ICON_SIZE * 4 / 5);
+const DEC_WHITE = 16777215;
 var Background = new Clutter.Color();
 
 //basic functions
+
+function d2h(d) {return '#' + d.toString(16);}
+function h2d(h) {return parseInt(h.replace('#',''),16);} 
+
 function parseInts(strs) {
     let rec = [];
     for (let i in strs)
@@ -107,19 +116,12 @@ function num_to_freq(num) {
 function percent_to_hex(str, num) {
     return str.format(Math.min(Math.floor(num * 256), 255)).replace(' ', '0');
 }
-function num_to_color(num, max) {
-    if (max !== undefined)
-        num = num / max;
-    if (num >= 1)
-        return '#FF0000';
-    if (num <= 0)
-        return '#00FFFF';
-    num *= 3;
-    if (num >= 2)
-        return percent_to_hex('#FF%2x00', 3 - num);
-    if (num >= 1)
-        return percent_to_hex('#%2xFF00', num - 1);
-    return percent_to_hex('#00FF%2x', 1 - num);
+function num_to_color(num) {
+    if (num >= .8)
+        return hi_color;
+    if (num >= .5)
+        return mid_color;
+    return low_color;
 }
 
 function Panel_Indicator() {
@@ -139,12 +141,15 @@ Panel_Indicator.prototype = {
     
     initSettings: function() {
         background = settings.getString('Background','#FFFFFF80');
-  //      summary_only = settings.getBoolean('Summary only', false);
         cpus_to_monitor = settings.getComboArray('CPUs to Monitor', DEFAULT_CPUS);
         refresh_time = parseInt(settings.getString('Refresh Time', '2000'));
         style = settings.getComboArray('Display Style', DEFAULT_STYLE);
         graph_width = settings.getString('Graph Width', '6');
         digit_type = settings.getComboArray('Digit Type', DEFAULT_DIGIT_TYPE);
+        text_color = settings.getString('Text Color', '#FFFF80');
+        low_color = settings.getString('Low Color', '#00FF00');
+        mid_color = settings.getString('Med Color', '#FFFF00');
+        hi_color = settings.getString('High Color', '#FF0000');
     },
     
     buildit: function() {
@@ -155,8 +160,10 @@ Panel_Indicator.prototype = {
         this.actor.remove_style_class_name('panel-button');
         this.actor.add_style_class_name('cfs-panel-button');
         this.color = new Clutter.Color();
-        this.label = new St.Label({ text: this.name, style_class: 'cfs-label'});
+        this.label = new St.Label({ text: this.name, style_class: 'cfs-label' });
+
         this.digit = new St.Label({ style_class: 'cfs-panel-value' });
+        this.digit.style = "font-size: 12px; padding: 0 2px 0 2px; text-shadow: black 0px 1px 1px; color:" + text_color + ";";
         this.graph = new St.DrawingArea({reactive: false});
         this.graph.height = height;
         this.box = new St.BoxLayout();
@@ -241,22 +248,40 @@ Panel_Indicator.prototype = {
                 this._parent.set(item.type ,item.id);
             }));
         }
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.settings_menu = new AppletSettingsUI.SettingsMenu('Settings');
 
         this.cpus_to_monitor = new AppletSettingsUI.ComboSetting(settings, 'CPUs to Monitor');
         this.display_style = new AppletSettingsUI.ComboSetting(settings, 'Display Style');
         this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
+        this.width_slider = new PopupMenu.PopupSliderMenuItem(graph_width/20);
+        this.width_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        this.text_color_slider = new AppletSettingsUI.ColorSliderMenuItem(h2d(text_color)/DEC_WHITE);
+        this.text_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        
+        
+        this.settings_menu.addLabel("CPUs to display:");
         this.settings_menu.addSetting(this.cpus_to_monitor.getComboBox());
+        this.settings_menu.addLabel("Display style:");
         this.settings_menu.addSetting(this.display_style.getComboBox());
+        this.settings_menu.addLabel("Show clock speed or percentage:");
         this.settings_menu.addSetting(this.digit_type.getComboBox());
         this.settings_menu.addBreak();
-   //     this.settings_menu.addSetting(this.edit_menu_item);
-    //    this.settings_menu.addSetting(this.defaults_menu_item);
+        this.settings_menu.addLabel("Graph width:");
+        this.settings_menu.addSetting(this.width_slider);
+        this.settings_menu.addLabel("Text color:");
+        this.settings_menu.addSetting(this.text_color_slider);
 
         this.menu.addMenuItem(this.settings_menu);
 
 
 
+    },
+    
+    _slider_drag_end: function() {
+        settings.setString('Graph Width', Math.round(this.width_slider._value*20).toString());
+        settings.setString('Text Color', d2h(Math.round(this.text_color_slider._value*DEC_WHITE)));
+        settings.writeSettings();
     }
 };
 
@@ -428,23 +453,7 @@ MyApplet.prototype = {
                 global.logError(e);
             }
         },
-        
-        go: function() {
-            try {
-            this.myactor = new St.BoxLayout({ pack_start: true });
-            box = this.myactor;
-            this.actor.add(this.myactor);  
-            this.actor.reactive = global.settings.get_boolean("panel-edit-mode");            
-            global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
-            FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
-            let finish = GLib.get_monotonic_time();
-            global.log('cpufreq: finish @ ' + finish);
-            global.log('cpufreq: use ' + (finish - start));
-            log('cpufreq: use ' + (finish - start)); } catch (e) {
-                global.logError(e);
-            }
-        },
-        
+
         rebuild: function() {
             try {
             this.actor.remove_actor(this.myactor);
@@ -471,9 +480,6 @@ MyApplet.prototype = {
                 log('cpufreq: use ' + (finish - start)); } catch (e) {
                     global.logError(e);
                 }
-            
-        //    this.go();
-           
         },
         
         on_panel_edit_mode_changed: function() {

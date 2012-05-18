@@ -277,6 +277,17 @@ AppletSettings.prototype = {
                 this.parsed_settings.push(newsetting);
             }
             this.writeSettings();
+        },
+        
+        setString: function (key, str) {
+            global.logError(str);
+            let i = this._get_index_of_setting(key);
+            if (i != -1) {
+                this.parsed_settings[i][1] = str;
+            } else {
+                let newsetting = [key, str];
+                this.parsed_settings.push(newsetting);
+            }
         }
 };
 Signals.addSignalMethods(AppletSettings.prototype);

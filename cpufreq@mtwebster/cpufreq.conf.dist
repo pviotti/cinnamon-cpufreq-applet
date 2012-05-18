@@ -16,7 +16,8 @@ Refresh Time, 2000
 Graph Width, 4
 Background, #FFFFFF80
 
-Low Color, green
-Med Color, yellow
-High Color, red
-Text Color, white
+Low Color, #00FF00
+Med Color, #FFFF00
+High Color, #FF0000
+
+Text Color, #FFFF80
