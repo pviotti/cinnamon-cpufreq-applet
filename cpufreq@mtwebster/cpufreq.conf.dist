@@ -14,10 +14,11 @@ CPUs to Monitor, Individual Only, 2
 
 Refresh Time, 2000
 Graph Width, 4
-Background, #FFFFFF80
 
-Low Color, #00FF00
-Med Color, #FFFF00
-High Color, #FF0000
+Background, #ffffff
 
-Text Color, #FFFF80
+Low Color,#00ff00
+Med Color,#ffff00
+High Color,#ff0000
+
+Text Color,#ffffff

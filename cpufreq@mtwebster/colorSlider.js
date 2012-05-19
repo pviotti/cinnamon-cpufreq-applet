@@ -4,6 +4,36 @@ const St = imports.gi.St;
 const Clutter = imports.gi.Clutter;
 const Gtk = imports.gi.Gtk;
 
+const COLORS = ['#ffffff',
+                '#c0c0c0',
+                '#808080',
+                '#000000',
+                '#ff0000',
+                '#800000',
+                '#ffff00',
+                '#808000',
+                '#00ff00',
+                '#008000',
+                '#00ffff',
+                '#008080',
+                '#0000ff',
+                '#000080',
+                '#ff00ff',
+                '#800080',
+                '#ffa500']
+
+const NUM_COLORS = COLORS.length;
+
+function get_index_of_color (str) {
+    for (let i = 0; i < NUM_COLORS; i++) {
+        let item = COLORS[i];
+        if (item == str) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 function ColorSliderMenuItem() {
     this._init.apply(this, arguments);
 }
@@ -11,16 +41,13 @@ function ColorSliderMenuItem() {
 ColorSliderMenuItem.prototype = {
     __proto__: PopupMenu.PopupBaseMenuItem.prototype,
 
-    _init: function(value) {
+    _init: function(hexstr) {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, { activate: false });
 
         this.actor.connect('key-press-event', Lang.bind(this, this._onKeyPressEvent));
-
-        if (isNaN(value))
-            // Avoid spreading NaNs around
-            throw TypeError('The slider value must be a number');
+        let value = get_index_of_color(hexstr)/NUM_COLORS;  
         this._value = Math.max(Math.min(value, 1), 0);
-        this._color = 'ffffff';
+        this.color = cutHex(hexstr);
         this._slider = new St.DrawingArea({ style_class: 'popup-slider-menu-item', reactive: true });
         this.addActor(this._slider, { span: -1, expand: true });
         this._slider.connect('repaint', Lang.bind(this, this._sliderRepaint));
@@ -85,10 +112,7 @@ ColorSliderMenuItem.prototype = {
         let handleY = height / 2;
         let handleX = handleRadius + (width - 2 * handleRadius) * this._value;
 
-        let multi = 1024;
-        let intval = Math.round(this._value*multi);
-        global.logError(intval.toString()+' is intermediate');
-        this.color = int2hexcolor(Math.round(intval*(16777215/multi)));
+        this.color = COLORS[Math.round(this._value*NUM_COLORS)];
         cr.setSourceRGB (
             hexToR(this.color) / 255,
             hexToG(this.color) / 255,
@@ -99,7 +123,7 @@ ColorSliderMenuItem.prototype = {
     },
 
     getColorStr: function() {
-        return '#' + this.color;
+        return this.color;
     },
     
     _startDragging: function(actor, event) {
@@ -206,7 +230,16 @@ function int2hexcolor(d) {
     let b = d & 255;
     let g = (d >> 8) & 255;
     let r = (d >> 16) & 255;
-    
     let rgbhex = d2h(r) + d2h(g) + d2h(b);
     return rgbhex;
+}
+
+function hexcolor2int(h) {
+    let r = hexToR(h);
+    let g = hexToG(h);
+    let b = hexToB(h);
+    let intcolor = (r << 16);
+    intcolor += (g << 8);
+    intcolor += b;
+    return intcolor;
 }

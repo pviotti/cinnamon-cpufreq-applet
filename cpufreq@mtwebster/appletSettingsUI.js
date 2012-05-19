@@ -20,11 +20,6 @@ SwitchSetting.prototype = {
             this._switch = new PopupMenu.PopupSwitchMenuItem(this.key, this.settings.getBoolean(this.key, false));
             this._switch.connect('toggled', Lang.bind(this, this._switch_toggled));
             this.settings.connect('settings-file-changed', Lang.bind(this, this._settings_file_edited_offline));
-            try {
-
-            } catch (e) {
-                global.logError(e);
-            }
         },
 
         getSwitch: function () {

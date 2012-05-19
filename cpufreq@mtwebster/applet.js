@@ -141,7 +141,7 @@ Panel_Indicator.prototype = {
     },
     
     initSettings: function() {
-        background = settings.getString('Background','#FFFFFF80');
+        background = settings.getString('Background','#FFFF80');
         cpus_to_monitor = settings.getComboArray('CPUs to Monitor', DEFAULT_CPUS);
         refresh_time = parseInt(settings.getString('Refresh Time', '2000'));
         style = settings.getComboArray('Display Style', DEFAULT_STYLE);
@@ -257,9 +257,21 @@ Panel_Indicator.prototype = {
         this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
         this.width_slider = new PopupMenu.PopupSliderMenuItem(graph_width/20);
         this.width_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        this.text_color_slider = new ColorSlider.ColorSliderMenuItem(h2d(text_color)/DEC_WHITE);
-        this.text_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
         
+        this.refresh_slider = new PopupMenu.PopupSliderMenuItem(refresh_time/10000);
+        this.refresh_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        
+        this.text_color_slider = new ColorSlider.ColorSliderMenuItem(text_color);
+        this.hi_color_slider = new ColorSlider.ColorSliderMenuItem(hi_color);
+        this.med_color_slider = new ColorSlider.ColorSliderMenuItem(mid_color);
+        this.low_color_slider = new ColorSlider.ColorSliderMenuItem(low_color);
+        this.background_color_slider = new ColorSlider.ColorSliderMenuItem(background);
+
+        this.text_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        this.hi_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        this.med_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        this.low_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
+        this.background_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
         
         this.settings_menu.addLabel("CPUs to display:");
         this.settings_menu.addSetting(this.cpus_to_monitor.getComboBox());
@@ -272,16 +284,36 @@ Panel_Indicator.prototype = {
         this.settings_menu.addSetting(this.width_slider);
         this.settings_menu.addLabel("Text color:");
         this.settings_menu.addSetting(this.text_color_slider);
-
+        this.settings_menu.addBreak();
+        this.settings_menu.addLabel("High graph color:");
+        this.settings_menu.addSetting(this.hi_color_slider);
+        this.settings_menu.addLabel("Medium graph color:");
+        this.settings_menu.addSetting(this.med_color_slider);
+        this.settings_menu.addLabel("Low graph color:");
+        this.settings_menu.addSetting(this.low_color_slider);
+        this.settings_menu.addLabel("Graph background:");
+        this.settings_menu.addSetting(this.background_color_slider);
+        this.settings_menu.addBreak();
+        this.settings_menu.addLabel("Refresh rate:");
+        this.settings_menu.addSetting(this.refresh_slider);
+        
+        
         this.menu.addMenuItem(this.settings_menu);
-
+        
 
 
     },
     
     _slider_drag_end: function() {
-        settings.setString('Graph Width', Math.round(this.width_slider._value*20).toString());
+        new_width = Math.round(this.width_slider._value*20);
+        settings.setString('Graph Width', (new_width >= 1) ? new_width.toString() : '1');
         settings.setString('Text Color', this.text_color_slider.getColorStr());
+        settings.setString('High Color', this.hi_color_slider.getColorStr());
+        settings.setString('Med Color', this.med_color_slider.getColorStr());
+        settings.setString('Low Color', this.low_color_slider.getColorStr());
+        settings.setString('Background', this.background_color_slider.getColorStr());
+        let new_refresh = Math.round(this.refresh_slider._value*10000);
+        settings.setString('Refresh Time', (new_refresh >= 200) ? new_refresh.toString() : '200');
         settings.writeSettings();
     }
 };
@@ -446,13 +478,16 @@ MyApplet.prototype = {
 
             try {
                 this.orientation = orientation;
-                settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf.dist', 'cpufreq.conf');
-                settings.connect('settings-file-changed', Lang.bind(this, this.rebuild));
+                this._initialize_settings();
                 this.rebuild();
-                
             } catch (e) {
                 global.logError(e);
             }
+        },
+        
+        _initialize_settings: function() {
+            settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf.dist', 'cpufreq.conf');
+            settings.connect('settings-file-changed', Lang.bind(this, this.rebuild));
         },
 
         rebuild: function() {
@@ -486,6 +521,4 @@ MyApplet.prototype = {
         on_panel_edit_mode_changed: function() {
             this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
         }
-
-
-    };
+};
