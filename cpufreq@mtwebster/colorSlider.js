@@ -20,7 +20,7 @@ ColorSliderMenuItem.prototype = {
             // Avoid spreading NaNs around
             throw TypeError('The slider value must be a number');
         this._value = Math.max(Math.min(value, 1), 0);
-
+        this._color = 'ffffff';
         this._slider = new St.DrawingArea({ style_class: 'popup-slider-menu-item', reactive: true });
         this.addActor(this._slider, { span: -1, expand: true });
         this._slider.connect('repaint', Lang.bind(this, this._sliderRepaint));
@@ -44,11 +44,8 @@ ColorSliderMenuItem.prototype = {
         let themeNode = area.get_theme_node();
         let [width, height] = area.get_surface_size();
         let handleRadius = 20;
-        //let handleRadius = themeNode.get_length('-slider-handle-radius');
-
         let sliderWidth = width - 2 * handleRadius;
         let sliderHeight = themeNode.get_length('-slider-height');
-
         let sliderBorderWidth = themeNode.get_length('-slider-border-width');
 
         let sliderBorderColor = themeNode.get_color('-slider-border-color');
@@ -56,7 +53,6 @@ ColorSliderMenuItem.prototype = {
 
         let sliderActiveBorderColor = themeNode.get_color('-slider-active-border-color');
         let sliderActiveColor = themeNode.get_color('-slider-active-background-color');
-
         cr.setSourceRGBA (
             sliderActiveColor.red / 255,
             sliderActiveColor.green / 255,
@@ -71,7 +67,6 @@ ColorSliderMenuItem.prototype = {
             sliderActiveBorderColor.alpha / 255);
         cr.setLineWidth(sliderBorderWidth);
         cr.stroke();
-
         cr.setSourceRGBA (
             sliderColor.red / 255,
             sliderColor.green / 255,
@@ -90,15 +85,23 @@ ColorSliderMenuItem.prototype = {
         let handleY = height / 2;
         let handleX = handleRadius + (width - 2 * handleRadius) * this._value;
 
-        let color = d2h(Math.round(this._value*16777215));
+        let multi = 1024;
+        let intval = Math.round(this._value*multi);
+        global.logError(intval.toString()+' is intermediate');
+        this.color = int2hexcolor(Math.round(intval*(16777215/multi)));
         cr.setSourceRGB (
-            hexToR(color) / 255,
-            hexToG(color) / 255,
-            hexToB(color) / 255);
+            hexToR(this.color) / 255,
+            hexToG(this.color) / 255,
+            hexToB(this.color) / 255);
+
         cr.arc(handleX, handleY, handleRadius, 0, 2 * Math.PI);
         cr.fill();
     },
 
+    getColorStr: function() {
+        return '#' + this.color;
+    },
+    
     _startDragging: function(actor, event) {
         if (this._dragging) // don't allow two drags at the same time
             return;
@@ -194,4 +197,16 @@ function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)}
 function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)}
 function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
 function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
-function d2h(d) {return d.toString(16);}
+function d2h(d) {
+    let h = d.toString(16);
+    return (h.length == 1) ? '0' + h : h;
+    }
+
+function int2hexcolor(d) {
+    let b = d & 255;
+    let g = (d >> 8) & 255;
+    let r = (d >> 16) & 255;
+    
+    let rgbhex = d2h(r) + d2h(g) + d2h(b);
+    return rgbhex;
+}

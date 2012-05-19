@@ -164,7 +164,7 @@ Panel_Indicator.prototype = {
         this.label = new St.Label({ text: this.name, style_class: 'cfs-label' });
 
         this.digit = new St.Label({ style_class: 'cfs-panel-value' });
-        this.digit.style = "font-size: 12px; padding: 0 2px 0 2px; text-shadow: black 0px 1px 1px; color:" + text_color + ";";
+        this.digit.style = "font-size: 14px; padding: 0 2px 0 2px; color:" + text_color + ";";
         this.graph = new St.DrawingArea({reactive: false});
         this.graph.height = height;
         this.box = new St.BoxLayout();
@@ -281,7 +281,7 @@ Panel_Indicator.prototype = {
     
     _slider_drag_end: function() {
         settings.setString('Graph Width', Math.round(this.width_slider._value*20).toString());
-        settings.setString('Text Color', d2h(Math.round(this.text_color_slider._value*DEC_WHITE)));
+        settings.setString('Text Color', this.text_color_slider.getColorStr());
         settings.writeSettings();
     }
 };

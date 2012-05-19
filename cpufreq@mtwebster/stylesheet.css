@@ -1,7 +1,6 @@
 .cfs-label,.cfs-panel-value {
     font-size: 12px;
     padding: 0 2px 0 2px;
-    text-shadow: black 0px 2px 2px;
 }
 
 .cfs-panel-value {
@@ -15,11 +14,10 @@
 
 .cfs-panel-button:hover {
     color: white;
-    text-shadow: black 0px 2px 2px;
 }
 
 .cfs-panel-settings-label {
     font-size: 14px;
     font-weight: bold;
-    text-shadow: black 0px 2px 2px
+    text-shadow: black 0px 1px 1px
 }
