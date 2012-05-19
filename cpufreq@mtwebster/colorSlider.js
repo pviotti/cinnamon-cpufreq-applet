@@ -111,8 +111,8 @@ ColorSliderMenuItem.prototype = {
 
         let handleY = height / 2;
         let handleX = handleRadius + (width - 2 * handleRadius) * this._value;
-
-        this.color = COLORS[Math.round(this._value*NUM_COLORS)];
+        let index = Math.round(this._value*(NUM_COLORS));
+        this.color = COLORS[(index < NUM_COLORS) ? index : NUM_COLORS-1];
         cr.setSourceRGB (
             hexToR(this.color) / 255,
             hexToG(this.color) / 255,

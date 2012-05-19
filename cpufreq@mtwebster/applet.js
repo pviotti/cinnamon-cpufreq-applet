@@ -498,7 +498,7 @@ MyApplet.prototype = {
             cpus = [];
             selectors = [];
             } catch (e) {
-                global.logError(e);
+                // this will error on first load, ignore?
             }
             
             try {
