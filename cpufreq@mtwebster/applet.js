@@ -79,7 +79,7 @@ var Background = new Clutter.Color();
 //basic functions
 
 function d2h(d) {return '#' + d.toString(16);}
-function h2d(h) {return parseInt(h.replace('#',''),16);} 
+function h2d(h) {return parseInt(h.replace('#',''),16);}
 
 function parseInts(strs) {
     let rec = [];
@@ -134,11 +134,11 @@ Panel_Indicator.prototype = {
         PanelMenu.Button.prototype._init.call(this, 0.0);
         this.name = name
         this._parent = parent;
-        
+
         let a = this.initSettings();
         this.buildit();
     },
-    
+
     initSettings: function() {
         background = settings.getString('Background','#FFFF80');
         cpus_to_monitor = settings.getComboArray('CPUs to Monitor', DEFAULT_CPUS);
@@ -151,7 +151,7 @@ Panel_Indicator.prototype = {
         mid_color = settings.getString('Med Color', '#FFFF00');
         hi_color = settings.getString('High Color', '#FF0000');
     },
-    
+
     buildit: function() {
 
         Background.from_string(background);
@@ -174,11 +174,11 @@ Panel_Indicator.prototype = {
 
         this.label.visible = false; // override for now - show-text
 
-        
+
         this.digit.visible = style[1] == 'Digit' || style[1] == 'Both';
         this.graph.visible = style[1] == 'Graph' || style[1] == 'Both';
 
-        this.graph.width = graph_width;  
+        this.graph.width = graph_width;
 
         this.box.add_actor(this.label);
         this.box.add_actor(this.graph);
@@ -196,7 +196,7 @@ Panel_Indicator.prototype = {
         this._parent.connect('cur-changed', Lang.bind(this, this._onChange));
 
     },
-    
+
     _draw: function() {
         if ((this.graph.visible || this.box.visible) == false) return;
         let [width, heigth] = this.graph.get_surface_size();
@@ -256,10 +256,10 @@ Panel_Indicator.prototype = {
         this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
         this.width_slider = new PopupMenu.PopupSliderMenuItem(graph_width/20);
         this.width_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        
+
         this.refresh_slider = new PopupMenu.PopupSliderMenuItem(refresh_time/10000);
         this.refresh_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        
+
         this.text_color_slider = new ColorSlider.ColorSliderMenuItem(text_color);
         this.hi_color_slider = new ColorSlider.ColorSliderMenuItem(hi_color);
         this.med_color_slider = new ColorSlider.ColorSliderMenuItem(mid_color);
@@ -271,7 +271,7 @@ Panel_Indicator.prototype = {
         this.med_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
         this.low_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
         this.background_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        
+
         this.settings_menu.addLabel("CPUs to display:");
         this.settings_menu.addSetting(this.cpus_to_monitor.getComboBox());
         this.settings_menu.addLabel("Display style:");
@@ -295,14 +295,14 @@ Panel_Indicator.prototype = {
         this.settings_menu.addBreak();
         this.settings_menu.addLabel("Refresh rate:");
         this.settings_menu.addSetting(this.refresh_slider);
-        
-        
+
+
         this.menu.addMenuItem(this.settings_menu);
-        
+
 
 
     },
-    
+
     _slider_drag_end: function() {
         new_width = Math.round(this.width_slider._value*20);
         settings.setString('Graph Width', (new_width >= 1) ? new_width.toString() : '1');
@@ -472,7 +472,7 @@ function MyApplet(orientation) {
 MyApplet.prototype = {
         __proto__: Applet.Applet.prototype,
 
-        _init: function(orientation) {        
+        _init: function(orientation) {
             Applet.Applet.prototype._init.call(this, orientation);
 
             try {
@@ -483,7 +483,7 @@ MyApplet.prototype = {
                 global.logError(e);
             }
         },
-        
+
         _initialize_settings: function() {
             settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf.dist', 'cpufreq.conf');
             settings.connect('settings-file-changed', Lang.bind(this, this.rebuild));
@@ -499,13 +499,13 @@ MyApplet.prototype = {
             } catch (e) {
                 // this will error on first load, ignore?
             }
-            
+
             try {
                 this.myactor = new St.BoxLayout({ pack_start: true });
                 box = this.myactor;
-                this.actor.add(this.myactor);  
-                
-                this.actor.reactive = global.settings.get_boolean("panel-edit-mode");            
+                this.actor.add(this.myactor);
+
+                this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
                 global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
 
                 FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
@@ -516,7 +516,7 @@ MyApplet.prototype = {
                     global.logError(e);
                 }
         },
-        
+
         on_panel_edit_mode_changed: function() {
             this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
         }
