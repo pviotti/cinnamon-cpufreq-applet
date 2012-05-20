@@ -96,32 +96,32 @@ function rd_nums_frm_file(file) {
 function num_to_freq_panel(num) {
     num = Math.round(num);
     if (num < 1000)
-        return num + 'k';
+        return num + ' KHz';
     if (num < 1000000)
-        return Math.round(num / 10) / 100 + 'M';
+        return Math.round(num / 10) / 100 + ' MHz';
     if (num < 1000000000)
-        return Math.round(num / 10000) / 100 + 'G';
-    return Math.round(num / 10000000) / 100 + 'T';
+        return Math.round(num / 10000) / 100 + ' GHz';
+    return Math.round(num / 10000000) / 100 + ' THz';
 }
 function num_to_freq(num) {
     num = Math.round(num);
     if (num < 1000)
-        return num + 'kHz';
+        return num + ' KHz';
     if (num < 1000000)
-        return Math.round(num) / 1000 + 'MHz';
+        return Math.round(num) / 1000 + ' MHz';
     if (num < 1000000000)
-        return Math.round(num / 1000) / 1000 + 'GHz';
-    return Math.round(num / 1000000) / 1000 + 'THz';
+        return Math.round(num / 1000) / 1000 + ' GHz';
+    return Math.round(num / 1000000) / 1000 + ' THz';
 }
 function percent_to_hex(str, num) {
     return str.format(Math.min(Math.floor(num * 256), 255)).replace(' ', '0');
 }
-function num_to_color(num) {
-    if (num >= .8)
+function num_to_color(num, min, max) {
+    if (num == max)
         return hi_color;
-    if (num >= .5)
-        return mid_color;
-    return low_color;
+    if (num == min)
+        return low_color;
+    return mid_color;
 }
 
 function Panel_Indicator() {
@@ -202,7 +202,7 @@ Panel_Indicator.prototype = {
         let [width, heigth] = this.graph.get_surface_size();
         let cr = this.graph.get_context();
         let value = this._parent.avg_freq / this._parent.max;
-        this.color.from_string(num_to_color(value));
+        this.color.from_string(num_to_color(this._parent.avg_freq, this._parent.min, this._parent.max));
         Clutter.cairo_set_source_color(cr, Background);
         cr.rectangle(0, 0, width, height);
         cr.fill();
