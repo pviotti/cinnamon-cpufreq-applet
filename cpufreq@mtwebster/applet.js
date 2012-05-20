@@ -72,7 +72,6 @@ let hi_color = '#FF0000'; // red
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
-const Schema = new Gio.Settings({ schema: 'org.gnome.shell.extensions.cpufreq' });
 const height = Math.round(Panel.PANEL_ICON_SIZE * 4 / 5);
 const DEC_WHITE = 16777215;
 var Background = new Clutter.Color();

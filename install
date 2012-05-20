@@ -35,6 +35,6 @@ fi
 cp -vr "${srcdir}/${uuid}" "/home/mtwebster/.local/share/cinnamon/applets/"
 # mkdir -p "${prefix}/${usr_dir}/bin"
 
-mkdir -p "${prefix}/${usr_dir}/share/glib-2.0/schemas"
-cp -v "org.gnome.shell.extensions.${name}.gschema.xml" "${prefix}/${usr_dir}/share/glib-2.0/schemas"
-[[ -z $nopost ]] && post "${prefix}/${usr_dir}/share/glib-2.0/schemas" || true
+#mkdir -p "${prefix}/${usr_dir}/share/glib-2.0/schemas"
+#cp -v "org.gnome.shell.extensions.${name}.gschema.xml" "${prefix}/${usr_dir}/share/glib-2.0/schemas"
+#[[ -z $nopost ]] && post "${prefix}/${usr_dir}/share/glib-2.0/schemas" || true
