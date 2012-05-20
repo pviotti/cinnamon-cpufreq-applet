@@ -96,7 +96,7 @@ function rd_nums_frm_file(file) {
 function num_to_freq_panel(num) {
     num = Math.round(num);
     if (num < 1000)
-        return num + ' KHz';
+        return num + ' kHz';
     if (num < 1000000)
         return Math.round(num / 10) / 100 + ' MHz';
     if (num < 1000000000)
@@ -106,7 +106,7 @@ function num_to_freq_panel(num) {
 function num_to_freq(num) {
     num = Math.round(num);
     if (num < 1000)
-        return num + ' KHz';
+        return num + ' kHz';
     if (num < 1000000)
         return Math.round(num) / 1000 + ' MHz';
     if (num < 1000000000)
@@ -117,9 +117,9 @@ function percent_to_hex(str, num) {
     return str.format(Math.min(Math.floor(num * 256), 255)).replace(' ', '0');
 }
 function num_to_color(num, min, max) {
-    if (num == max)
-        return hi_color;
-    if (num == min)
+    if (num >= max-1000) // max-101 is because on at least my machine there is a max of 2.401, next step is 2.4
+        return hi_color; // I'm guessing the 2.401 is for turbo boost? (i7)  so this is to ensure 'hi' level
+    if (num == min)     // at the 'normal' hi (i.e. 2.4)
         return low_color;
     return mid_color;
 }
