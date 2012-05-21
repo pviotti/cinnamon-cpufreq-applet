@@ -126,9 +126,21 @@ SettingsMenu.prototype = {
     addBreak: function() {
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
     },
-    
+
     addLabel: function(text) {
         this.menu.addMenuItem(new PopupMenu.PopupMenuItem(text, { reactive: false, style_class: 'cfs-panel-settings-label' }));
+    },
+
+    addLabelEntry: function(text, entry_text) {
+        let newlabel = new PopupMenu.PopupMenuItem(text, { reactive: false, style_class: 'cfs-panel-settings-label' });
+        let entrybox = new St.Entry({ style_class: 'menu-label-entry',
+                                     hint_text: _("Hex value"),
+                                     track_hover: true,
+                                     can_focus: true });
+        entrybox.set_text(entry_text);
+        newlabel.addActor(entrybox);
+        this.menu.addMenuItem(newlabel);
+        return entrybox;
     }
 
 };

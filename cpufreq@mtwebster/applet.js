@@ -279,7 +279,9 @@ Panel_Indicator.prototype = {
         this.settings_menu.addLabel("Show clock speed or percentage:");
         this.settings_menu.addSetting(this.digit_type.getComboBox());
         this.settings_menu.addBreak();
-        this.settings_menu.addLabel("Graph width:");
+        this.width_val_box = this.settings_menu.addLabelEntry("Graph width:", graph_width.toString());
+        this.width_val_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(0)}));
         this.settings_menu.addSetting(this.width_slider);
         this.settings_menu.addLabel("Text color:");
         this.settings_menu.addSetting(this.text_color_slider);
@@ -293,19 +295,39 @@ Panel_Indicator.prototype = {
         this.settings_menu.addLabel("Graph background:");
         this.settings_menu.addSetting(this.background_color_slider);
         this.settings_menu.addBreak();
-        this.settings_menu.addLabel("Refresh rate:");
+        this.refresh_val_box = this.settings_menu.addLabelEntry("Refresh Rate:", refresh_time.toString());
+        this.refresh_val_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(1)}));
         this.settings_menu.addSetting(this.refresh_slider);
-
 
         this.menu.addMenuItem(this.settings_menu);
 
-
-
     },
 
+    _entry_changed: function(box) {
+        // sanity check graph width
+        if (box == 0) {
+            let val = parseInt(this.width_val_box.get_text());
+            if (isNaN(val) || val < 1 || val > 20)
+                return;
+            this.width_slider.setValue(val/20);
+            settings.setString('Graph Width', val.toString());
+            settings.writeSettings();
+        } else if (box == 1) {
+            let val = parseInt(this.refresh_val_box.get_text());
+            if (isNaN(val) || val < 50 || val > 10000)  // any less than 50 and bad things can start to happen
+                return;
+            this.refresh_slider.setValue(val/10000);
+            settings.setString('Refresh Time', val.toString());
+            settings.writeSettings();
+        }
+         
+        
+    },
     _slider_drag_end: function() {
         new_width = Math.round(this.width_slider._value*20);
         settings.setString('Graph Width', (new_width >= 1) ? new_width.toString() : '1');
+        this.width_val_box.set_text((new_width>=1) ? new_width.toString() : '1');
         settings.setString('Text Color', this.text_color_slider.getColorStr());
         settings.setString('High Color', this.hi_color_slider.getColorStr());
         settings.setString('Med Color', this.med_color_slider.getColorStr());
@@ -313,6 +335,7 @@ Panel_Indicator.prototype = {
         settings.setString('Background', this.background_color_slider.getColorStr());
         let new_refresh = Math.round(this.refresh_slider._value*10000);
         settings.setString('Refresh Time', (new_refresh >= 200) ? new_refresh.toString() : '200');
+        this.refresh_val_box.set_text(new_refresh.toString());
         settings.writeSettings();
     }
 };
