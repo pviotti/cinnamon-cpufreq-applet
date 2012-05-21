@@ -50,7 +50,7 @@ let cpus = [];
 let selectors = [];
 let box;
 let summary;
-
+let atomic = false;
 const DEFAULT_STYLE = ['Display Style', 'Both'];
 const DEFAULT_DIGIT_TYPE = ['Digit Type', 'Frequency'];
 const DEFAULT_CPUS = ['CPUs to Monitor', 'Summary+Individual', '0'];
@@ -335,7 +335,7 @@ Panel_Indicator.prototype = {
         settings.setString('Background', this.background_color_slider.getColorStr());
         let new_refresh = Math.round(this.refresh_slider._value*10000);
         settings.setString('Refresh Time', (new_refresh >= 200) ? new_refresh.toString() : '200');
-        this.refresh_val_box.set_text(new_refresh.toString());
+        this.refresh_val_box.set_text((new_refresh>=200) ? new_refresh.toString() : '200');
         settings.writeSettings();
     }
 };
@@ -479,6 +479,7 @@ function add_cpus_frm_files(cpu_child) {
     } catch (e) {
         global.logError(e);
     }
+    atomic=false;
 }
 
 
@@ -497,11 +498,10 @@ MyApplet.prototype = {
 
         _init: function(orientation) {
             Applet.Applet.prototype._init.call(this, orientation);
-
             try {
-                this.orientation = orientation;
-                this._initialize_settings();
-                this.rebuild();
+                    this.orientation = orientation;
+                    this._initialize_settings();
+                    this.rebuild();
             } catch (e) {
                 global.logError(e);
             }
@@ -513,12 +513,15 @@ MyApplet.prototype = {
         },
 
         rebuild: function() {
-            try {
-            this.actor.remove_actor(this.myactor);
-            box.destroy();
-            this.myactor.destroy();
-            cpus = [];
-            selectors = [];
+            if (atomic)
+                return;
+            atomic = true; // hackity hack - make sure only one rebuild is happening at a time,
+            try { //                         else we get lots more from setting changes
+                this.actor.remove_actor(this.myactor);
+                box.destroy();
+                this.myactor.destroy();
+                cpus = [];
+                selectors = [];
             } catch (e) {
                 // this will error on first load, ignore?
             }
@@ -535,9 +538,10 @@ MyApplet.prototype = {
                 let finish = GLib.get_monotonic_time();
                 global.log('cpufreq: finish @ ' + finish);
                 global.log('cpufreq: use ' + (finish - start));
-                log('cpufreq: use ' + (finish - start)); } catch (e) {
-                    global.logError(e);
-                }
+                log('cpufreq: use ' + (finish - start));
+            } catch (e) {
+                global.logError(e);
+            }
         },
 
         on_panel_edit_mode_changed: function() {
