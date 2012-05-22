@@ -163,7 +163,7 @@ Panel_Indicator.prototype = {
         this.label = new St.Label({ text: this.name, style_class: 'cfs-label' });
 
         this.digit = new St.Label({ style_class: 'cfs-panel-value' });
-        this.digit.style = "font-size: 14px; padding: 0 2px 0 2px; color:" + text_color + ";";
+        this.digit.style = "font-size: 12px; padding: 0 2px 0 2px; color:" + text_color + ";";
         this.graph = new St.DrawingArea({reactive: false});
         this.graph.height = height;
         this.box = new St.BoxLayout();
@@ -283,16 +283,26 @@ Panel_Indicator.prototype = {
         this.width_val_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
                 this._entry_changed(0)}));
         this.settings_menu.addSetting(this.width_slider);
-        this.settings_menu.addLabel("Text color:");
+        this.text_color_box = this.settings_menu.addLabelEntry("Text color:", ColorSlider.cutHex(text_color));
+        this.text_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(2)}));
         this.settings_menu.addSetting(this.text_color_slider);
         this.settings_menu.addBreak();
-        this.settings_menu.addLabel("High graph color:");
+        this.hi_color_box = this.settings_menu.addLabelEntry("High graph color:", ColorSlider.cutHex(hi_color));
+        this.hi_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(3)}));
         this.settings_menu.addSetting(this.hi_color_slider);
-        this.settings_menu.addLabel("Medium graph color:");
+        this.mid_color_box = this.settings_menu.addLabelEntry("Medium graph color:", ColorSlider.cutHex(mid_color));
+        this.mid_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(4)}));
         this.settings_menu.addSetting(this.med_color_slider);
-        this.settings_menu.addLabel("Low graph color:");
+        this.lo_color_box = this.settings_menu.addLabelEntry("Low graph color:", ColorSlider.cutHex(low_color));
+        this.lo_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(5)}));
         this.settings_menu.addSetting(this.low_color_slider);
-        this.settings_menu.addLabel("Graph background:");
+        this.bg_color_box = this.settings_menu.addLabelEntry("Graph background color:", ColorSlider.cutHex(background));
+        this.bg_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
+                this._entry_changed(6)}));
         this.settings_menu.addSetting(this.background_color_slider);
         this.settings_menu.addBreak();
         this.refresh_val_box = this.settings_menu.addLabelEntry("Refresh Rate:", refresh_time.toString());
@@ -320,19 +330,63 @@ Panel_Indicator.prototype = {
             this.refresh_slider.setValue(val/10000);
             settings.setString('Refresh Time', val.toString());
             settings.writeSettings();
+        } else if (box == 2) {
+            let val = this.text_color_box.get_text();
+            if (!ColorSlider.isValidHexColor(val))
+                return;
+            fullstring = '#' + val;
+            this.text_color_slider.setColor(fullstring);
+            settings.setString('Text Color', fullstring);
+            settings.writeSettings();
+        } else if (box == 3) {
+            let val = this.hi_color_box.get_text();
+            if (!ColorSlider.isValidHexColor(val))
+                return;
+            fullstring = '#' + val;
+            this.hi_color_slider.setColor(fullstring);
+            settings.setString('High Color', fullstring);
+            settings.writeSettings();
+        } else if (box == 4) {
+            let val = this.mid_color_box.get_text();
+            if (!ColorSlider.isValidHexColor(val))
+                return;
+            fullstring = '#' + val;
+            this.med_color_slider.setColor(fullstring);
+            settings.setString('Med Color', fullstring);
+            settings.writeSettings();
+        } else if (box == 5) {
+            let val = this.lo_color_box.get_text();
+            if (!ColorSlider.isValidHexColor(val))
+                return;
+            fullstring = '#' + val;
+            this.low_color_slider.setColor(fullstring);
+            settings.setString('Low Color', fullstring);
+            settings.writeSettings();
+        } else if (box == 6) {
+            let val = this.bg_color_box.get_text();
+            if (!ColorSlider.isValidHexColor(val))
+                return;
+            fullstring = '#' + val;
+            this.background_color_slider.setColor(fullstring);
+            settings.setString('Background', fullstring);
+            settings.writeSettings();
         }
-         
-        
     },
+
     _slider_drag_end: function() {
         new_width = Math.round(this.width_slider._value*20);
         settings.setString('Graph Width', (new_width >= 1) ? new_width.toString() : '1');
         this.width_val_box.set_text((new_width>=1) ? new_width.toString() : '1');
         settings.setString('Text Color', this.text_color_slider.getColorStr());
+        this.text_color_box.set_text(ColorSlider.cutHex(this.text_color_slider.getColorStr()));
         settings.setString('High Color', this.hi_color_slider.getColorStr());
+        this.hi_color_box.set_text(ColorSlider.cutHex(this.hi_color_slider.getColorStr()));
         settings.setString('Med Color', this.med_color_slider.getColorStr());
+        this.mid_color_box.set_text(ColorSlider.cutHex(this.med_color_slider.getColorStr()));
         settings.setString('Low Color', this.low_color_slider.getColorStr());
+        this.lo_color_box.set_text(ColorSlider.cutHex(this.low_color_slider.getColorStr()));
         settings.setString('Background', this.background_color_slider.getColorStr());
+        this.bg_color_box.set_text(ColorSlider.cutHex(this.background_color_slider.getColorStr()));
         let new_refresh = Math.round(this.refresh_slider._value*10000);
         settings.setString('Refresh Time', (new_refresh >= 200) ? new_refresh.toString() : '200');
         this.refresh_val_box.set_text((new_refresh>=200) ? new_refresh.toString() : '200');

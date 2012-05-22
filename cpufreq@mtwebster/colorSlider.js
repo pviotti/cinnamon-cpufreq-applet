@@ -41,13 +41,19 @@ function ColorSliderMenuItem() {
 ColorSliderMenuItem.prototype = {
     __proto__: PopupMenu.PopupBaseMenuItem.prototype,
 
-    _init: function(hexstr) {
+    _init: function(color) {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, { activate: false });
 
         this.actor.connect('key-press-event', Lang.bind(this, this._onKeyPressEvent));
-        let value = get_index_of_color(hexstr)/NUM_COLORS;  
-        this._value = Math.max(Math.min(value, 1), 0);
-        this.color = cutHex(hexstr);
+
+        this.color = color;
+        index = get_index_of_color(this.color);
+        if (index == -1) {
+            this._value = .5;
+        } else {
+            let value = index/NUM_COLORS;  
+            this._value = Math.max(Math.min(value, 1), 0);        
+        }
         this._slider = new St.DrawingArea({ style_class: 'popup-slider-menu-item', reactive: true });
         this.addActor(this._slider, { span: -1, expand: true });
         this._slider.connect('repaint', Lang.bind(this, this._sliderRepaint));
@@ -63,6 +69,18 @@ ColorSliderMenuItem.prototype = {
             throw TypeError('The slider value must be a number');
 
         this._value = Math.max(Math.min(value, 1), 0);
+        this._slider.queue_repaint();
+    },
+    
+    setColor: function(color) {
+        this.color = color;
+        index = get_index_of_color(this.color);
+        if (index == -1) {
+            this._value = .5;
+        } else {
+            let value = index/NUM_COLORS;  
+            this._value = Math.max(Math.min(value, 1), 0);        
+        }
         this._slider.queue_repaint();
     },
 
@@ -111,12 +129,15 @@ ColorSliderMenuItem.prototype = {
 
         let handleY = height / 2;
         let handleX = handleRadius + (width - 2 * handleRadius) * this._value;
-        let index = Math.round(this._value*(NUM_COLORS));
-        this.color = COLORS[(index < NUM_COLORS) ? index : NUM_COLORS-1];
+        if (this._dragging) {
+            let index = Math.round(this._value*(NUM_COLORS));
+            this.color = COLORS[(index < NUM_COLORS) ? index : NUM_COLORS-1];
+        }
+        let strippedcolor = cutHex(this.color);
         cr.setSourceRGB (
-            hexToR(this.color) / 255,
-            hexToG(this.color) / 255,
-            hexToB(this.color) / 255);
+            hexToR(strippedcolor) / 255,
+            hexToG(strippedcolor) / 255,
+            hexToB(strippedcolor) / 255);
 
         cr.arc(handleX, handleY, handleRadius, 0, 2 * Math.PI);
         cr.fill();
@@ -125,6 +146,7 @@ ColorSliderMenuItem.prototype = {
     getColorStr: function() {
         return this.color;
     },
+    
     
     _startDragging: function(actor, event) {
         if (this._dragging) // don't allow two drags at the same time
@@ -205,8 +227,10 @@ ColorSliderMenuItem.prototype = {
     _onKeyPressEvent: function (actor, event) {
         let key = event.get_key_symbol();
         if (key == Clutter.KEY_Right || key == Clutter.KEY_Left) {
-            let delta = key == Clutter.KEY_Right ? 0.1 : -0.1;
+            let delta = key == Clutter.KEY_Right ? 0.0625 : -0.0625;
             this._value = Math.max(0, Math.min(this._value + delta, 1));
+            let index = Math.round(this._value*(NUM_COLORS));
+            this.color = COLORS[(index < NUM_COLORS) ? index : NUM_COLORS-1];
             this._slider.queue_repaint();
             this.emit('value-changed', this._value);
             this.emit('drag-end');
@@ -242,4 +266,9 @@ function hexcolor2int(h) {
     intcolor += (g << 8);
     intcolor += b;
     return intcolor;
+}
+
+function isValidHexColor(sNum){
+  return (typeof sNum == "string") && sNum.length == 6 
+         && !isNaN( parseInt(sNum, 16) );
 }

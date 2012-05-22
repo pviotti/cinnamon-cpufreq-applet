@@ -1,5 +1,5 @@
 .cfs-label,.cfs-panel-value {
-    font-size: 11px;
+    font-size: 12px;
     padding: 0 2px 0 2px;
 }
 
@@ -23,6 +23,7 @@
 }
 
 .menu-label-entry {
+    font: 14px monospace;
 	padding: 5px;
 	border-radius: 4px;
 	color: rgb(255, 255, 255);
@@ -33,7 +34,7 @@
 	selected-color: black;
 	caret-color: rgb(128, 128, 128);
 	caret-size: 1px;
-	width: 60px;
+	width: 80px;
 	height: 15px;
 	transition-duration: 300;
 	box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);
