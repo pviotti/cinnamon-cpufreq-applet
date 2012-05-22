@@ -44,7 +44,6 @@ const AppletSettingsUI = AppletDir.appletSettingsUI;
 const ColorSlider = AppletDir.colorSlider;
 
 let start = GLib.get_monotonic_time();
-global.log('cpufreq: start @ ' + start);
 let settings = {};
 let cpus = [];
 let selectors = [];
@@ -309,9 +308,17 @@ Panel_Indicator.prototype = {
         this.refresh_val_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
                 this._entry_changed(1)}));
         this.settings_menu.addSetting(this.refresh_slider);
-
+        this.settings_menu.addBreak();
+        this.defaults = new PopupMenu.PopupMenuItem('Reset to defaults',
+                { reactive: true, style_class: 'cfs-panel-settings-label' });
+        this.defaults.connect('activate', Lang.bind(this, this._reset_defaults));
+        this.settings_menu.addSetting(this.defaults);
         this.menu.addMenuItem(this.settings_menu);
 
+    },
+
+    _reset_defaults: function () {
+        settings.deleteSettingsFile();  
     },
 
     _entry_changed: function(box) {
@@ -322,14 +329,12 @@ Panel_Indicator.prototype = {
                 return;
             this.width_slider.setValue(val/20);
             settings.setString('Graph Width', val.toString());
-            settings.writeSettings();
         } else if (box == 1) {
             let val = parseInt(this.refresh_val_box.get_text());
             if (isNaN(val) || val < 50 || val > 10000)  // any less than 50 and bad things can start to happen
                 return;
             this.refresh_slider.setValue(val/10000);
             settings.setString('Refresh Time', val.toString());
-            settings.writeSettings();
         } else if (box == 2) {
             let val = this.text_color_box.get_text();
             if (!ColorSlider.isValidHexColor(val))
@@ -337,7 +342,6 @@ Panel_Indicator.prototype = {
             fullstring = '#' + val;
             this.text_color_slider.setColor(fullstring);
             settings.setString('Text Color', fullstring);
-            settings.writeSettings();
         } else if (box == 3) {
             let val = this.hi_color_box.get_text();
             if (!ColorSlider.isValidHexColor(val))
@@ -345,7 +349,6 @@ Panel_Indicator.prototype = {
             fullstring = '#' + val;
             this.hi_color_slider.setColor(fullstring);
             settings.setString('High Color', fullstring);
-            settings.writeSettings();
         } else if (box == 4) {
             let val = this.mid_color_box.get_text();
             if (!ColorSlider.isValidHexColor(val))
@@ -353,7 +356,6 @@ Panel_Indicator.prototype = {
             fullstring = '#' + val;
             this.med_color_slider.setColor(fullstring);
             settings.setString('Med Color', fullstring);
-            settings.writeSettings();
         } else if (box == 5) {
             let val = this.lo_color_box.get_text();
             if (!ColorSlider.isValidHexColor(val))
@@ -361,7 +363,6 @@ Panel_Indicator.prototype = {
             fullstring = '#' + val;
             this.low_color_slider.setColor(fullstring);
             settings.setString('Low Color', fullstring);
-            settings.writeSettings();
         } else if (box == 6) {
             let val = this.bg_color_box.get_text();
             if (!ColorSlider.isValidHexColor(val))
@@ -369,8 +370,8 @@ Panel_Indicator.prototype = {
             fullstring = '#' + val;
             this.background_color_slider.setColor(fullstring);
             settings.setString('Background', fullstring);
-            settings.writeSettings();
         }
+        settings.writeSettings();
     },
 
     _slider_drag_end: function() {
@@ -590,8 +591,6 @@ MyApplet.prototype = {
 
                 FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
                 let finish = GLib.get_monotonic_time();
-                global.log('cpufreq: finish @ ' + finish);
-                global.log('cpufreq: use ' + (finish - start));
                 log('cpufreq: use ' + (finish - start));
             } catch (e) {
                 global.logError(e);

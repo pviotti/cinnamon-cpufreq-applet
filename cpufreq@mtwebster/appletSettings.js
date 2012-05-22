@@ -52,15 +52,8 @@ AppletSettings.prototype = {
                 this.dist_filename = this.applet_dir.get_child(this.dist_filename);
                 this.settings_dir = Gio.file_new_for_path(SETTINGS_FOLDER + this.uuid);
                 this.settings_file = Gio.file_parse_name(SETTINGS_FOLDER + this.uuid + '/' + this.filename);
-
-                if (!this.settings_file.query_exists(null)) {
-                    if (!this.settings_dir.query_exists(null)) this.settings_dir.make_directory_with_parents(null);
-                    let fp = this.settings_file.create(0, null);
-                    let dist_settings = Cinnamon.get_file_contents_utf8_sync(this.dist_filename.get_path());
-                    fp.write(dist_settings, null);
-                    fp.close(null);
-                }
-                let f = this.settings_file;
+                this._create_settings_file();
+           //     let f = this.settings_file;
            //     this.settings_file_monitor = f.monitor_file(Gio.FileMonitorFlags.NONE, null);
            //     this.settings_file_monitor.connect('changed', Lang.bind(this, this._on_settings_file_changed));
                 this.readSettings();
@@ -68,9 +61,28 @@ AppletSettings.prototype = {
                 global.logError(e);
             }
         },
+        
+        _create_settings_file: function () {
+            if (!this.settings_file.query_exists(null)) {
+                    if (!this.settings_dir.query_exists(null))
+                        this.settings_dir.make_directory_with_parents(null);
+                    let fp = this.settings_file.create(0, null);
+                    let dist_settings = Cinnamon.get_file_contents_utf8_sync(this.dist_filename.get_path());
+                    fp.write(dist_settings, null);
+                    fp.close(null);
+            }
+        },
+        
 
         _on_settings_file_changed: function () {
             this.emit("settings-file-changed");
+        },
+
+        deleteSettingsFile: function () {
+            this.settings_file.delete(null);
+            this._create_settings_file();
+            this.readSettings();
+            this._on_settings_file_changed();
         },
 
         /*
