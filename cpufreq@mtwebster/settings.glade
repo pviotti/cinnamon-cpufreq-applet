@@ -112,7 +112,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkComboBox" id="combobox1">
+              <object class="GtkComboBox" id="cpu_display_combo">
                 <property name="width_request">150</property>
                 <property name="height_request">30</property>
                 <property name="visible">True</property>
@@ -147,7 +147,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkComboBox" id="combobox2">
+              <object class="GtkComboBox" id="disp_style_combo">
                 <property name="width_request">150</property>
                 <property name="height_request">30</property>
                 <property name="visible">True</property>
@@ -181,7 +181,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkComboBox" id="combobox3">
+              <object class="GtkComboBox" id="show_combo">
                 <property name="width_request">150</property>
                 <property name="height_request">30</property>
                 <property name="visible">True</property>
@@ -224,7 +224,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkScale" id="scale1">
+              <object class="GtkScale" id="graph_width_slider">
                 <property name="width_request">200</property>
                 <property name="height_request">40</property>
                 <property name="visible">True</property>
@@ -266,7 +266,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkScale" id="scale2">
+              <object class="GtkScale" id="refresh_slider">
                 <property name="width_request">200</property>
                 <property name="height_request">40</property>
                 <property name="visible">True</property>
@@ -290,12 +290,6 @@
                 <property name="can_focus">False</property>
                 <property name="row_homogeneous">True</property>
                 <property name="column_homogeneous">True</property>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
                 <child>
                   <object class="GtkLabel" id="label6">
                     <property name="visible">True</property>
@@ -363,7 +357,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton1">
+                  <object class="GtkColorButton" id="high_color">
                     <property name="use_action_appearance">False</property>
                     <property name="height_request">50</property>
                     <property name="visible">True</property>
@@ -379,7 +373,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton2">
+                  <object class="GtkColorButton" id="med_color">
                     <property name="use_action_appearance">False</property>
                     <property name="height_request">50</property>
                     <property name="visible">True</property>
@@ -395,7 +389,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton3">
+                  <object class="GtkColorButton" id="low_color">
                     <property name="use_action_appearance">False</property>
                     <property name="height_request">50</property>
                     <property name="visible">True</property>
@@ -412,7 +406,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton4">
+                  <object class="GtkColorButton" id="text_color">
                     <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -427,7 +421,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton5">
+                  <object class="GtkColorButton" id="bg_color">
                     <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -440,6 +434,12 @@
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
                 </child>
               </object>
               <packing>
