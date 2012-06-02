@@ -1,13 +1,13 @@
 from gi.repository import Gtk
 from gi.repository import Gdk
 from os.path import expanduser
+import os
 
 class Namespace: pass
 
 parsed_settings = []
-init = True
+init=True
 # set defaults and initialize setting holders
-global s
 s = Namespace()
 s.disp_style = 2
 s.digit_type = 0
@@ -20,7 +20,7 @@ s.medium_color = "#ffff00"
 s.high_color = "#ff0000"
 s.text_color = "#ffffff"
 
-
+iface = Namespace()
 
 
 
@@ -44,6 +44,7 @@ def rgbaToHexString(color):
 
 
 def readSettings(settings_file_path):
+    global parsed_settings
     file = open(settings_file_path)
     file_data = file.read()
     lines = file_data.split('\n')
@@ -63,20 +64,45 @@ def readSettings(settings_file_path):
         parsed_settings.append(component_line);
     print parsed_settings
 
-
-
+def writeSettings(file):
+    global parsed_settings
+    global iface
+    os.remove(file)
+    file = open(file, "w")
+    for i in range(0, len(parsed_settings)):
+        if parsed_settings[i][0] == "_blank_":
+            file.write("\n")
+        elif parsed_settings[i][0] == "_comment_":
+            file.write(parsed_settings[i][1])
+            file.write('\n')
+        else:
+            file.write(parsed_settings[i][0] + ", " + parsed_settings[i][1])
+            file.write('\n')
+    file.close()
+    iface.apply_button.set_sensitive(False)
 
 def getSetting(key, default):
+    global parsed_settings
     if len(parsed_settings) == 0:
         return default;
     res = ""
     for i in range(0, len(parsed_settings)):
         if key == parsed_settings[i][0]:
-            res = this.parsed_settings[i][1]
+            res = parsed_settings[i][1]
         if res == "":
             return default
         else:
             return result
+        
+def putSetting(key, val):
+    index = 0
+    global parsed_settings
+    for i in range(0, len(parsed_settings)):
+        item = parsed_settings[i][0]
+        if item == key:
+            index = i
+            continue
+    parsed_settings[index][1] = val
 
 def initSettings():
     s.disp_style = int(getSetting("Display Style", "2"))
@@ -98,20 +124,37 @@ class Handler:
         print "Hello World!"
         
     def onSettingChanged(self, *args):
-        print "onsettingschanged"
         if init: return
-        s.disp_style = disp_style_combo.get_active()
-        s.digit_type = show_combo.get_active()
-        s.cpus = cpu_display_combo.get_active()
-        s.refresh = refresh_slider.get_value()
-        s.width = graph_width_slider.get_value()
-        s.bg_color = rgbaToHexString(bg_color.get_rgba())
-        s.text_color = rgbaToHexString(text_color.get_rgba())
-        s,high_color = rgbaToHexString(high_color.get_rgba())
-        s.medium_color = rgbaToHexString(med_color.get_rgba())
-        s.low_color = rgbaToHexString(low_color.get_rgba())
+        global s
+        global iface
+        s.disp_style = iface.disp_style_combo.get_active()
+        s.digit_type = iface.show_combo.get_active()
+        s.cpus = iface.cpu_display_combo.get_active()
+        s.refresh = iface.refresh_slider.get_value()
+        s.width = iface.graph_width_slider.get_value()
+        s.bg_color = rgbaToHexString(iface.bg_color.get_rgba())
+        s.text_color = rgbaToHexString(iface.text_color.get_rgba())
+        s.high_color = rgbaToHexString(iface.high_color.get_rgba())
+        s.medium_color = rgbaToHexString(iface.med_color.get_rgba())
+        s.low_color = rgbaToHexString(iface.low_color.get_rgba())
+        iface.apply_button.set_sensitive(True)
         
-        
+    def onSaveChanges(self, button):
+        global parsed_settings
+        global s
+        global settings_file_path
+        putSetting("Display Style", str(s.disp_style))
+        putSetting("Digit Type", str(s.digit_type))
+        putSetting("CPUs to Monitor", str(s.cpus))
+        putSetting("Refresh Time", str(s.refresh))
+        putSetting("Graph Width", str(s.width))
+        putSetting("Background", s.bg_color)
+        putSetting("Low Color", s.low_color)
+        putSetting("Med Color", s.medium_color)
+        putSetting("High Color", s.high_color)
+        putSetting("Text Color", s.text_color)
+        writeSettings(settings_file_path)
+
 
 builder = Gtk.Builder()
 userhome = expanduser("~")
@@ -119,45 +162,45 @@ settings_file_path = userhome + "/.cinnamon/cpufreq@mtwebster/cpufreq.conf"
 readSettings(settings_file_path)
 
 builder.add_from_file("settings.glade")
-builder.connect_signals(Handler())
+
 
 window = builder.get_object("dialog1")
 initSettings()
+builder.connect_signals(Handler())
 
 # set the initial state of my settings in the dialog
-cpu_display_combo = builder.get_object("cpu_display_combo")
-cpu_display_combo.set_active(s.cpus)
+iface.cpu_display_combo = builder.get_object("cpu_display_combo")
+iface.cpu_display_combo.set_active(s.cpus)
 
-disp_style_combo = builder.get_object("disp_style_combo")
-disp_style_combo.set_active(s.disp_style)
+iface.disp_style_combo = builder.get_object("disp_style_combo")
+iface.disp_style_combo.set_active(s.disp_style)
 
-show_combo = builder.get_object("show_combo")
-show_combo.set_active(s.digit_type)
+iface.show_combo = builder.get_object("show_combo")
+iface.show_combo.set_active(s.digit_type)
 
-graph_width_slider = builder.get_object("graph_width_slider")
-graph_width_slider.set_value(s.width)
+iface.graph_width_slider = builder.get_object("graph_width_slider")
+iface.graph_width_slider.set_value(s.width)
 
-refresh_slider = builder.get_object("refresh_slider")
-refresh_slider.set_value(s.refresh)
+iface.refresh_slider = builder.get_object("refresh_slider")
+iface.refresh_slider.set_value(s.refresh)
 
-high_color = builder.get_object("high_color")
-high_color.set_rgba(hexToRGBA(s.high_color))
+iface.high_color = builder.get_object("high_color")
+iface.high_color.set_rgba(hexToRGBA(s.high_color))
 
-med_color = builder.get_object("med_color")
-med_color.set_rgba(hexToRGBA(s.medium_color))
+iface.med_color = builder.get_object("med_color")
+iface.med_color.set_rgba(hexToRGBA(s.medium_color))
 
-low_color = builder.get_object("low_color")
-low_color.set_rgba(hexToRGBA(s.low_color))
+iface.low_color = builder.get_object("low_color")
+iface.low_color.set_rgba(hexToRGBA(s.low_color))
 
-text_color = builder.get_object("text_color")
-text_color.set_rgba(hexToRGBA(s.text_color))
+iface.text_color = builder.get_object("text_color")
+iface.text_color.set_rgba(hexToRGBA(s.text_color))
 
-bg_color = builder.get_object("bg_color")
-bg_color.set_rgba(hexToRGBA(s.bg_color))
+iface.bg_color = builder.get_object("bg_color")
+iface.bg_color.set_rgba(hexToRGBA(s.bg_color))
 
-window.show_all()
+iface.apply_button = builder.get_object("apply_button")
 init = False
-
-
+window.show_all()
 
 Gtk.main()
