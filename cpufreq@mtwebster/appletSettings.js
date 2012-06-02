@@ -53,9 +53,9 @@ AppletSettings.prototype = {
                 this.settings_dir = Gio.file_new_for_path(SETTINGS_FOLDER + this.uuid);
                 this.settings_file = Gio.file_parse_name(SETTINGS_FOLDER + this.uuid + '/' + this.filename);
                 this._create_settings_file();
-           //     let f = this.settings_file;
-           //     this.settings_file_monitor = f.monitor_file(Gio.FileMonitorFlags.NONE, null);
-           //     this.settings_file_monitor.connect('changed', Lang.bind(this, this._on_settings_file_changed));
+                let f = this.settings_file;
+                this.settings_file_monitor = f.monitor_file(Gio.FileMonitorFlags.NONE, null);
+                this.settings_file_monitor.connect('changed', Lang.bind(this, this._on_settings_file_changed));
                 this.readSettings();
             } catch (e) {
                 global.logError(e);

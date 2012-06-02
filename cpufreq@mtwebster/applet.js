@@ -40,7 +40,7 @@ const Applet = imports.ui.applet;
 const UUID = 'cpufreq@mtwebster';
 const AppletDir = imports.ui.appletManager.applets[UUID];
 const AppletSettings = AppletDir.appletSettings;
-const AppletSettingsUI = AppletDir.appletSettingsUI;
+
 const ColorSlider = AppletDir.colorSlider;
 
 let start = GLib.get_monotonic_time();
@@ -50,9 +50,9 @@ let selectors = [];
 let box;
 let summary;
 let atomic = false;
-const DEFAULT_STYLE = ['Display Style', 'Both'];
-const DEFAULT_DIGIT_TYPE = ['Digit Type', 'Frequency'];
-const DEFAULT_CPUS = ['CPUs to Monitor', 'Summary+Individual', '0'];
+const DEFAULT_STYLE = "2";
+const DEFAULT_DIGIT_TYPE = "0";
+const DEFAULT_CPUS = "0";
 // global settings variables;
 
 let settings;
@@ -140,11 +140,11 @@ Panel_Indicator.prototype = {
 
     initSettings: function() {
         background = settings.getString('Background','#FFFF80');
-        cpus_to_monitor = settings.getComboArray('CPUs to Monitor', DEFAULT_CPUS);
+        cpus_to_monitor = parseInt(settings.getString('CPUs to Monitor', DEFAULT_CPUS));
         refresh_time = parseInt(settings.getString('Refresh Time', '2000'));
-        style = settings.getComboArray('Display Style', DEFAULT_STYLE);
-        graph_width = settings.getString('Graph Width', '6');
-        digit_type = settings.getComboArray('Digit Type', DEFAULT_DIGIT_TYPE);
+        style = parseInt(settings.getString('Display Style', DEFAULT_STYLE));
+        graph_width = parseInt(settings.getString('Graph Width', '6'));
+        digit_type = parseInt(settings.getString('Digit Type', DEFAULT_DIGIT_TYPE));
         text_color = settings.getString('Text Color', '#FFFF80');
         low_color = settings.getString('Low Color', '#00FF00');
         mid_color = settings.getString('Med Color', '#FFFF00');
@@ -174,9 +174,10 @@ Panel_Indicator.prototype = {
         this.label.visible = false; // override for now - show-text
 
 
-        this.digit.visible = style[1] == 'Digit' || style[1] == 'Both';
-        this.graph.visible = style[1] == 'Graph' || style[1] == 'Both';
-
+        this.graph.visible = style == 0 || style == 2;
+        this.digit.visible = style == 1 || style == 2;
+        
+        
         this.graph.width = graph_width;
 
         this.box.add_actor(this.label);
@@ -185,7 +186,7 @@ Panel_Indicator.prototype = {
         this.actor.add_actor(this.box);
         this.add_menu_items();
 
-        this.set_digit = digit_type[1] == 'Frequency' ? function () {
+        this.set_digit = digit_type == 0 ? function () {
             this.digit.text = num_to_freq_panel(this._parent.avg_freq);
         } : function () {
             this.digit.text = Math.round(this._parent.avg_freq / this._parent.max * 100) + ' %';
@@ -248,151 +249,23 @@ Panel_Indicator.prototype = {
             }));
         }
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.settings_menu = new AppletSettingsUI.SettingsMenu('Settings');
 
-        this.cpus_to_monitor = new AppletSettingsUI.ComboSetting(settings, 'CPUs to Monitor');
-        this.display_style = new AppletSettingsUI.ComboSetting(settings, 'Display Style');
-        this.digit_type = new AppletSettingsUI.ComboSetting(settings, 'Digit Type');
-        this.width_slider = new PopupMenu.PopupSliderMenuItem(graph_width/20);
-        this.width_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-
-        this.refresh_slider = new PopupMenu.PopupSliderMenuItem(refresh_time/10000);
-        this.refresh_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-
-        this.text_color_slider = new ColorSlider.ColorSliderMenuItem(text_color);
-        this.hi_color_slider = new ColorSlider.ColorSliderMenuItem(hi_color);
-        this.med_color_slider = new ColorSlider.ColorSliderMenuItem(mid_color);
-        this.low_color_slider = new ColorSlider.ColorSliderMenuItem(low_color);
-        this.background_color_slider = new ColorSlider.ColorSliderMenuItem(background);
-
-        this.text_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        this.hi_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        this.med_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        this.low_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-        this.background_color_slider.connect('drag-end', Lang.bind(this, this._slider_drag_end));
-
-        this.settings_menu.addLabel("CPUs to display:");
-        this.settings_menu.addSetting(this.cpus_to_monitor.getComboBox());
-        this.settings_menu.addLabel("Display style:");
-        this.settings_menu.addSetting(this.display_style.getComboBox());
-        this.settings_menu.addLabel("Show clock speed or percentage:");
-        this.settings_menu.addSetting(this.digit_type.getComboBox());
-        this.settings_menu.addBreak();
-        this.width_val_box = this.settings_menu.addLabelEntry("Graph width:", graph_width.toString());
-        this.width_val_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(0)}));
-        this.settings_menu.addSetting(this.width_slider);
-        this.text_color_box = this.settings_menu.addLabelEntry("Text color:", ColorSlider.cutHex(text_color));
-        this.text_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(2)}));
-        this.settings_menu.addSetting(this.text_color_slider);
-        this.settings_menu.addBreak();
-        this.hi_color_box = this.settings_menu.addLabelEntry("High graph color:", ColorSlider.cutHex(hi_color));
-        this.hi_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(3)}));
-        this.settings_menu.addSetting(this.hi_color_slider);
-        this.mid_color_box = this.settings_menu.addLabelEntry("Medium graph color:", ColorSlider.cutHex(mid_color));
-        this.mid_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(4)}));
-        this.settings_menu.addSetting(this.med_color_slider);
-        this.lo_color_box = this.settings_menu.addLabelEntry("Low graph color:", ColorSlider.cutHex(low_color));
-        this.lo_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(5)}));
-        this.settings_menu.addSetting(this.low_color_slider);
-        this.bg_color_box = this.settings_menu.addLabelEntry("Graph background color:", ColorSlider.cutHex(background));
-        this.bg_color_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(6)}));
-        this.settings_menu.addSetting(this.background_color_slider);
-        this.settings_menu.addBreak();
-        this.refresh_val_box = this.settings_menu.addLabelEntry("Refresh Rate:", refresh_time.toString());
-        this.refresh_val_box.clutter_text.connect('text-changed', Lang.bind(this, function() {
-                this._entry_changed(1)}));
-        this.settings_menu.addSetting(this.refresh_slider);
-        this.settings_menu.addBreak();
-        this.defaults = new PopupMenu.PopupMenuItem('Reset to defaults',
+        this.launch_settings = new PopupMenu.PopupMenuItem('Configure',
                 { reactive: true, style_class: 'cfs-panel-settings-label' });
-        this.defaults.connect('activate', Lang.bind(this, this._reset_defaults));
-        this.settings_menu.addSetting(this.defaults);
-        this.menu.addMenuItem(this.settings_menu);
+        this.launch_settings.connect('activate', Lang.bind(this, this._launch_settings));
+        this.menu.addMenuItem(this.launch_settings);
 
     },
 
-    _reset_defaults: function () {
-        settings.deleteSettingsFile();  
+    _launch_settings: function () {
+        global.logError("sdfds");
+        try {
+            command = "python " + settings.applet_dir.get_child('settings.py').get_path();
+            global.logError(command);
+            Main.Util.spawnCommandLine(command);
+        } catch (e) { global.logError(e); }
+        
     },
-
-    _entry_changed: function(box) {
-        // sanity check graph width
-        if (box == 0) {
-            let val = parseInt(this.width_val_box.get_text());
-            if (isNaN(val) || val < 1 || val > 20)
-                return;
-            this.width_slider.setValue(val/20);
-            settings.setString('Graph Width', val.toString());
-        } else if (box == 1) {
-            let val = parseInt(this.refresh_val_box.get_text());
-            if (isNaN(val) || val < 50 || val > 10000)  // any less than 50 and bad things can start to happen
-                return;
-            this.refresh_slider.setValue(val/10000);
-            settings.setString('Refresh Time', val.toString());
-        } else if (box == 2) {
-            let val = this.text_color_box.get_text();
-            if (!ColorSlider.isValidHexColor(val))
-                return;
-            fullstring = '#' + val;
-            this.text_color_slider.setColor(fullstring);
-            settings.setString('Text Color', fullstring);
-        } else if (box == 3) {
-            let val = this.hi_color_box.get_text();
-            if (!ColorSlider.isValidHexColor(val))
-                return;
-            fullstring = '#' + val;
-            this.hi_color_slider.setColor(fullstring);
-            settings.setString('High Color', fullstring);
-        } else if (box == 4) {
-            let val = this.mid_color_box.get_text();
-            if (!ColorSlider.isValidHexColor(val))
-                return;
-            fullstring = '#' + val;
-            this.med_color_slider.setColor(fullstring);
-            settings.setString('Med Color', fullstring);
-        } else if (box == 5) {
-            let val = this.lo_color_box.get_text();
-            if (!ColorSlider.isValidHexColor(val))
-                return;
-            fullstring = '#' + val;
-            this.low_color_slider.setColor(fullstring);
-            settings.setString('Low Color', fullstring);
-        } else if (box == 6) {
-            let val = this.bg_color_box.get_text();
-            if (!ColorSlider.isValidHexColor(val))
-                return;
-            fullstring = '#' + val;
-            this.background_color_slider.setColor(fullstring);
-            settings.setString('Background', fullstring);
-        }
-        settings.writeSettings();
-    },
-
-    _slider_drag_end: function() {
-        new_width = Math.round(this.width_slider._value*20);
-        settings.setString('Graph Width', (new_width >= 1) ? new_width.toString() : '1');
-        this.width_val_box.set_text((new_width>=1) ? new_width.toString() : '1');
-        settings.setString('Text Color', this.text_color_slider.getColorStr());
-        this.text_color_box.set_text(ColorSlider.cutHex(this.text_color_slider.getColorStr()));
-        settings.setString('High Color', this.hi_color_slider.getColorStr());
-        this.hi_color_box.set_text(ColorSlider.cutHex(this.hi_color_slider.getColorStr()));
-        settings.setString('Med Color', this.med_color_slider.getColorStr());
-        this.mid_color_box.set_text(ColorSlider.cutHex(this.med_color_slider.getColorStr()));
-        settings.setString('Low Color', this.low_color_slider.getColorStr());
-        this.lo_color_box.set_text(ColorSlider.cutHex(this.low_color_slider.getColorStr()));
-        settings.setString('Background', this.background_color_slider.getColorStr());
-        this.bg_color_box.set_text(ColorSlider.cutHex(this.background_color_slider.getColorStr()));
-        let new_refresh = Math.round(this.refresh_slider._value*10000);
-        settings.setString('Refresh Time', (new_refresh >= 200) ? new_refresh.toString() : '200');
-        this.refresh_val_box.set_text((new_refresh>=200) ? new_refresh.toString() : '200');
-        settings.writeSettings();
-    }
 };
 
 function CpufreqSelectorBase() {
@@ -516,15 +389,15 @@ function add_cpus_frm_files(cpu_child) {
     for (let i in selectors)
         visible[i] = true;
     visible[-1] = true;
-    switch (parseInt(cpus_to_monitor[2])) {
+    switch (cpus_to_monitor) {
         case 0:
             break;
-        case 1:
+        case 2:
             for (let i = 0; i < visible.length; i++) {
                 visible[i] = false;
             }
             break;
-        case 2:
+        case 1:
             visible[-1] = false;
             break;
     }
@@ -582,6 +455,7 @@ MyApplet.prototype = {
             }
 
             try {
+                settings.readSettings();
                 this.myactor = new St.BoxLayout({ pack_start: true });
                 box = this.myactor;
                 this.actor.add(this.myactor);
