@@ -1,6 +1,6 @@
 from gi.repository import Gtk
+from gi.repository import Gdk
 from os.path import expanduser
-from matplotlib.colors import colorConverter
 
 class Namespace: pass
 
@@ -24,32 +24,43 @@ s.text_color = "#ffffff"
 
 
 
-def hexToR(h): return int((cutHex(h))[0,2],16)
-def hexToG(h): return int((cutHex(h))[2,4],16)
-def hexToB(h): return int((cutHex(h))[4,6],16)
-def cutHex(h): return h[1,7]
-def d2h(d):
-    h = d.toString(16)
-    return (h.length == 1) ? '0' + h : h
+def hexToR(h): return int((cutHex(h))[0:2],16)/255
+def hexToG(h): return int((cutHex(h))[2:4],16)/255
+def hexToB(h): return int((cutHex(h))[4:6],16)/255
+def cutHex(h): return h[1:7]
 
 
-def int2hexcolor(d):
-    b = d & 255
-    g = (d >> 8) & 255
-    r = (d >> 16) & 255
-    rgbhex = d2h(r) + d2h(g) + d2h(b)
-    return rgbhex
+def hexToRGBA(js_hex): return Gdk.RGBA(hexToR(js_hex), hexToG(js_hex), hexToB(js_hex), 1.0)
+    
+    
+    
+    
+    
+    
+    
+    
+#def d2h(d):
+#    h = d.toString(16)
+#    return (h.length == 1) ? '0' + h : h
 
 
-function hexcolor2int(h) {
-    let r = hexToR(h);
-    let g = hexToG(h);
-    let b = hexToB(h);
-    let intcolor = (r << 16);
-    intcolor += (g << 8);
-    intcolor += b;
-    return intcolor;
-}
+#def int2hexcolor(d):
+#    b = d & 255
+#    g = (d >> 8) & 255
+#    r = (d >> 16) & 255
+#    rgbhex = d2h(r) + d2h(g) + d2h(b)
+#    return rgbhex
+
+
+#function hexcolor2int(h) {
+#    let r = hexToR(h);
+#    let g = hexToG(h);
+#    let b = hexToB(h);
+#    let intcolor = (r << 16);
+#    intcolor += (g << 8);
+#    intcolor += b;
+#    return intcolor;
+#}
 
 
 
@@ -113,6 +124,14 @@ class Handler:
 
     def onButtonPressed(self, button):
         print "Hello World!"
+        
+    def onSettingChanged():
+        
+        
+        
+        
+        
+        
 
 builder = Gtk.Builder()
 userhome = expanduser("~")
@@ -142,7 +161,19 @@ refresh_slider = builder.get_object("refresh_slider")
 refresh_slider.set_value(s.refresh)
 
 high_color = builder.get_object("high_color")
-high_color.set_rgba(colorConverter.to_rgba(high_color,alpha=1.0))
+high_color.set_rgba(hexToRGBA(s.high_color))
+
+med_color = builder.get_object("med_color")
+med_color.set_rgba(hexToRGBA(s.medium_color))
+
+low_color = builder.get_object("low_color")
+low_color.set_rgba(hexToRGBA(s.low_color))
+
+text_color = builder.get_object("text_color")
+text_color.set_rgba(hexToRGBA(s.text_color))
+
+bg_color = builder.get_object("bg_color")
+bg_color.set_rgba(hexToRGBA(s.bg_color))
 
 window.show_all()
 
