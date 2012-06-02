@@ -120,6 +120,7 @@
                 <property name="model">liststore1</property>
                 <property name="active">0</property>
                 <property name="active_id">0</property>
+                <signal name="changed" handler="onSettingChanged" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext1"/>
                   <attributes>
@@ -154,6 +155,7 @@
                 <property name="can_focus">False</property>
                 <property name="model">liststore2</property>
                 <property name="active">0</property>
+                <signal name="changed" handler="onSettingChanged" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext2"/>
                   <attributes>
@@ -188,6 +190,7 @@
                 <property name="can_focus">False</property>
                 <property name="model">liststore3</property>
                 <property name="active">0</property>
+                <signal name="changed" handler="onSettingChanged" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext3"/>
                   <attributes>
@@ -234,6 +237,7 @@
                 <property name="fill_level">1</property>
                 <property name="round_digits">0</property>
                 <property name="digits">0</property>
+                <signal name="value-changed" handler="onSettingChanged" swapped="no"/>
               </object>
               <packing>
                 <property name="x">580</property>
@@ -276,6 +280,7 @@
                 <property name="fill_level">1</property>
                 <property name="round_digits">0</property>
                 <property name="digits">0</property>
+                <signal name="value-changed" handler="onSettingChanged" swapped="no"/>
               </object>
               <packing>
                 <property name="x">580</property>
@@ -364,6 +369,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
+                    <signal name="color-set" handler="onSettingChanged" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -380,6 +386,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
+                    <signal name="color-set" handler="onSettingChanged" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -397,6 +404,7 @@
                     <property name="receives_default">True</property>
                     <property name="hexpand">True</property>
                     <property name="use_action_appearance">False</property>
+                    <signal name="color-set" handler="onSettingChanged" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -412,6 +420,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
+                    <signal name="color-set" handler="onSettingChanged" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">3</property>
@@ -427,6 +436,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
+                    <signal name="color-set" handler="onSettingChanged" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">3</property>

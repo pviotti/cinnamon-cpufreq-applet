@@ -5,8 +5,9 @@ from os.path import expanduser
 class Namespace: pass
 
 parsed_settings = []
-
+init = True
 # set defaults and initialize setting holders
+global s
 s = Namespace()
 s.disp_style = 2
 s.digit_type = 0
@@ -32,43 +33,14 @@ def cutHex(h): return h[1:7]
 
 def hexToRGBA(js_hex): return Gdk.RGBA(hexToR(js_hex), hexToG(js_hex), hexToB(js_hex), 1.0)
     
+def rgbaToHexString(color):
+    r = hex(int(round(color.red*255)))[2:4]
+    g = hex(int(round(color.green*255)))[2:4]
+    b = hex(int(round(color.blue*255)))[2:4]
+    res = "#"+ r+g+b
+    return res
     
     
-    
-    
-    
-    
-    
-#def d2h(d):
-#    h = d.toString(16)
-#    return (h.length == 1) ? '0' + h : h
-
-
-#def int2hexcolor(d):
-#    b = d & 255
-#    g = (d >> 8) & 255
-#    r = (d >> 16) & 255
-#    rgbhex = d2h(r) + d2h(g) + d2h(b)
-#    return rgbhex
-
-
-#function hexcolor2int(h) {
-#    let r = hexToR(h);
-#    let g = hexToG(h);
-#    let b = hexToB(h);
-#    let intcolor = (r << 16);
-#    intcolor += (g << 8);
-#    intcolor += b;
-#    return intcolor;
-#}
-
-
-
-
-
-
-
-
 
 
 def readSettings(settings_file_path):
@@ -125,11 +97,19 @@ class Handler:
     def onButtonPressed(self, button):
         print "Hello World!"
         
-    def onSettingChanged():
-        
-        
-        
-        
+    def onSettingChanged(self, *args):
+        print "onsettingschanged"
+        if init: return
+        s.disp_style = disp_style_combo.get_active()
+        s.digit_type = show_combo.get_active()
+        s.cpus = cpu_display_combo.get_active()
+        s.refresh = refresh_slider.get_value()
+        s.width = graph_width_slider.get_value()
+        s.bg_color = rgbaToHexString(bg_color.get_rgba())
+        s.text_color = rgbaToHexString(text_color.get_rgba())
+        s,high_color = rgbaToHexString(high_color.get_rgba())
+        s.medium_color = rgbaToHexString(med_color.get_rgba())
+        s.low_color = rgbaToHexString(low_color.get_rgba())
         
         
 
@@ -176,7 +156,7 @@ bg_color = builder.get_object("bg_color")
 bg_color.set_rgba(hexToRGBA(s.bg_color))
 
 window.show_all()
-
+init = False
 
 
 
