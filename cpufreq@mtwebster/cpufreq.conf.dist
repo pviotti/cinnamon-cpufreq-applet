@@ -1,24 +1,12 @@
-Display Style, Digit
-Display Style, Graph
-Display Style, Both
-Display Style_CHOICE, 2
+# settings used by cpufreq@mtwebster
 
-Digit Type, Frequency
-Digit Type, Percentage
-Digit Type_CHOICE, 0
-
-CPUs to Monitor_CHOICE, 0
-CPUs to Monitor, Summary+Individual, 0
-CPUs to Monitor, Summary Only, 1
-CPUs to Monitor, Individual Only, 2
-
+Display Style, 2
+Digit Type, 0
+CPUs to Monitor, 0
 Refresh Time, 2000
 Graph Width, 4
-
 Background, #ffffff
-
 Low Color,#00ff00
 Med Color,#ffff00
 High Color,#ff0000
-
 Text Color,#ffffff
