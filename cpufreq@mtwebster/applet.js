@@ -251,7 +251,7 @@ Panel_Indicator.prototype = {
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         this.launch_settings = new PopupMenu.PopupMenuItem('Configure',
-                { reactive: true, style_class: 'cfs-panel-settings-label' });
+                { reactive: true });
         this.launch_settings.connect('activate', Lang.bind(this, this._launch_settings));
         this.menu.addMenuItem(this.launch_settings);
 

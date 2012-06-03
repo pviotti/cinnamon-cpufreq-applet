@@ -1,6 +1,7 @@
 from gi.repository import Gtk
 from gi.repository import Gdk
 from os.path import expanduser
+from time import sleep as wait
 import os
 import inspect
 
@@ -8,7 +9,6 @@ class Namespace: pass
 
 parsed_settings = []
 init=True
-# set defaults and initialize setting holders
 s = Namespace()
 
 
@@ -63,7 +63,7 @@ def readSettings(settings_file_path):
         component_line = []
         for j in range(0, len(component_line_pretrim)):
             component_line.append(component_line_pretrim[j].strip())
-        parsed_settings.append(component_line);
+        parsed_settings.append(component_line)
 
 def writeSettings(file):
     global parsed_settings
@@ -85,7 +85,7 @@ def writeSettings(file):
 def getSetting(key, default):
     global parsed_settings
     if len(parsed_settings) == 0:
-        return default;
+        return default
     res = ""
     for i in range(0, len(parsed_settings)):
         if key == parsed_settings[i][0]:
@@ -117,6 +117,22 @@ def initSettings():
     s.medium_color = getSetting("Med Color", "#ffff00")
     s.high_color = getSetting("High Color", "#ff0000")
     s.text_color = getSetting("Text Color", "#ffffff")
+    
+def saveSettings():
+    global parsed_settings
+    global s
+    global settings_file_path
+    putSetting("Display Style", str(s.disp_style))
+    putSetting("Digit Type", str(s.digit_type))
+    putSetting("CPUs to Monitor", str(s.cpus))
+    putSetting("Refresh Time", str(int(s.refresh)))
+    putSetting("Graph Width", str(int(s.width)))
+    putSetting("Background", s.bg_color)
+    putSetting("Low Color", s.low_color)
+    putSetting("Med Color", s.medium_color)
+    putSetting("High Color", s.high_color)
+    putSetting("Text Color", s.text_color)
+    writeSettings(settings_file_path)
 
 def initIface():
     global s
@@ -149,15 +165,10 @@ class Handler:
     def onDefaults(self, button):
         global window
         global iface
-        defaultSettings();
-        Handler.onSaveChanges(self, None);
-        initIface()
-        iface.apply_button.set_sensitive(False)
-        window.queue_draw()
-        while Gtk.events_pending():
-            Gtk.main_iteration_do(True)
+        defaultSettings()
+        saveSettings()
+        Gtk.main_quit(None)
 
-        
     def onSettingChanged(self, *args):
         if init: return
         global s
@@ -175,21 +186,7 @@ class Handler:
         iface.apply_button.set_sensitive(True)
         
     def onSaveChanges(self, button):
-        global parsed_settings
-        global s
-        global settings_file_path
-        putSetting("Display Style", str(s.disp_style))
-        putSetting("Digit Type", str(s.digit_type))
-        putSetting("CPUs to Monitor", str(s.cpus))
-        putSetting("Refresh Time", str(int(s.refresh)))
-        putSetting("Graph Width", str(int(s.width)))
-        putSetting("Background", s.bg_color)
-        putSetting("Low Color", s.low_color)
-        putSetting("Med Color", s.medium_color)
-        putSetting("High Color", s.high_color)
-        putSetting("Text Color", s.text_color)
-        writeSettings(settings_file_path)
-
+        saveSettings()
 
 builder = Gtk.Builder()
 userhome = expanduser("~")
