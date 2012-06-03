@@ -249,11 +249,12 @@ Panel_Indicator.prototype = {
             }));
         }
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
-        this.launch_settings = new PopupMenu.PopupMenuItem('Configure',
-                { reactive: true });
-        this.launch_settings.connect('activate', Lang.bind(this, this._launch_settings));
-        this.menu.addMenuItem(this.launch_settings);
+        
+        let config_menu_item = new PopupMenu.PopupBaseMenuItem(null, {reactive: true});
+        let config_icon = new St.Icon({icon_name: "system-run", icon_size: 16, icon_type: St.IconType.SYMBOLIC});
+        config_menu_item.addActor(config_icon);
+        config_menu_item.connect('activate', Lang.bind(this, this._launch_settings));
+        this.menu.addMenuItem(config_menu_item);
 
     },
 
