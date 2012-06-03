@@ -41,8 +41,6 @@ const UUID = 'cpufreq@mtwebster';
 const AppletDir = imports.ui.appletManager.applets[UUID];
 const AppletSettings = AppletDir.appletSettings;
 
-const ColorSlider = AppletDir.colorSlider;
-
 let start = GLib.get_monotonic_time();
 let settings = {};
 let cpus = [];
