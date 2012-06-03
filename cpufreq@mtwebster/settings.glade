@@ -3,7 +3,7 @@
   <!-- interface-requires gtk+ 3.0 -->
   <object class="GtkAdjustment" id="adjustment1">
     <property name="lower">1</property>
-    <property name="upper">20</property>
+    <property name="upper">40</property>
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
@@ -13,9 +13,21 @@
     <property name="step_increment">10</property>
     <property name="page_increment">100</property>
   </object>
+  <object class="GtkAdjustment" id="adjustment3">
+    <property name="upper">2000</property>
+    <property name="step_increment">10</property>
+    <property name="page_increment">100</property>
+    <property name="page_size">100</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment4">
+    <property name="upper">2000</property>
+    <property name="step_increment">10</property>
+    <property name="page_increment">100</property>
+    <property name="page_size">100</property>
+  </object>
   <object class="GtkDialog" id="dialog1">
     <property name="width_request">800</property>
-    <property name="height_request">400</property>
+    <property name="height_request">500</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">CPU Frequency Applet Settings</property>
@@ -456,6 +468,87 @@
               </object>
               <packing>
                 <property name="y">135</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator" id="separator3">
+                <property name="width_request">780</property>
+                <property name="height_request">30</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="y">334</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label11">
+                <property name="width_request">198</property>
+                <property name="height_request">30</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">Left/Right Applet Padding</property>
+                <property name="justify">center</property>
+                <attributes>
+                  <attribute name="font-desc" value="Sans Bold 10"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="x">290</property>
+                <property name="y">352</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="left_pad_slider">
+                <property name="width_request">250</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="adjustment">adjustment3</property>
+                <property name="inverted">True</property>
+                <property name="restrict_to_fill_level">False</property>
+                <property name="fill_level">0</property>
+                <property name="round_digits">0</property>
+                <property name="digits">0</property>
+                <property name="has_origin">False</property>
+                <signal name="value-changed" handler="onSettingChanged" swapped="no"/>
+              </object>
+              <packing>
+                <property name="x">30</property>
+                <property name="y">380</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="right_pad_slider">
+                <property name="width_request">250</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="adjustment">adjustment4</property>
+                <property name="restrict_to_fill_level">False</property>
+                <property name="fill_level">0</property>
+                <property name="round_digits">0</property>
+                <property name="digits">0</property>
+                <property name="has_origin">False</property>
+                <signal name="value-changed" handler="onSettingChanged" swapped="no"/>
+              </object>
+              <packing>
+                <property name="x">500</property>
+                <property name="y">380</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkImage" id="image1">
+                <property name="width_request">135</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="pixbuf">./sample.png</property>
+              </object>
+              <packing>
+                <property name="x">322</property>
+                <property name="y">390</property>
               </packing>
             </child>
           </object>

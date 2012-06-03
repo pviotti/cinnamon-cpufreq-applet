@@ -44,6 +44,8 @@ def defaultSettings():
     s.medium_color = "#ffff00"
     s.high_color = "#ff0000"
     s.text_color = "#ffffff"
+    s.right_pad = 20
+    s.left_pad = 20
 
 def readSettings(settings_file_path):
     global parsed_settings
@@ -96,14 +98,17 @@ def getSetting(key, default):
             return res
         
 def putSetting(key, val):
-    index = 0
+    index = -1
     global parsed_settings
     for i in range(0, len(parsed_settings)):
         item = parsed_settings[i][0]
         if item == key:
             index = i
             continue
-    parsed_settings[index][1] = val
+    if index == -1:
+        parsed_settings.append([key, val])
+    else:
+        parsed_settings[index][1] = val
 
 def initSettings():
     global s
@@ -117,6 +122,8 @@ def initSettings():
     s.medium_color = getSetting("Med Color", "#ffff00")
     s.high_color = getSetting("High Color", "#ff0000")
     s.text_color = getSetting("Text Color", "#ffffff")
+    s.left_pad = int(getSetting("Left Padding", "20"))
+    s.right_pad = int(getSetting("Right Padding", "20"))
     
 def saveSettings():
     global parsed_settings
@@ -132,6 +139,8 @@ def saveSettings():
     putSetting("Med Color", s.medium_color)
     putSetting("High Color", s.high_color)
     putSetting("Text Color", s.text_color)
+    putSetting("Left Padding", str(int(s.left_pad)))
+    putSetting("Right Padding", str(int(s.right_pad)))
     writeSettings(settings_file_path)
 
 def initIface():
@@ -157,6 +166,10 @@ def initIface():
     iface.text_color.queue_draw()
     iface.bg_color.set_rgba(hexToRGBA(s.bg_color))
     iface.bg_color.queue_draw()
+    iface.left_pad_slider.set_value(s.left_pad)
+    iface.left_pad_slider.queue_draw()
+    iface.right_pad_slider.set_value(s.right_pad)
+    iface.right_pad_slider.queue_draw()
 
 class Handler:
     def onDeleteWindow(self, *args):
@@ -183,6 +196,8 @@ class Handler:
         s.high_color = rgbaToHexString(iface.high_color.get_rgba())
         s.medium_color = rgbaToHexString(iface.med_color.get_rgba())
         s.low_color = rgbaToHexString(iface.low_color.get_rgba())
+        s.left_pad = iface.left_pad_slider.get_value()
+        s.right_pad = iface.right_pad_slider.get_value()
         iface.apply_button.set_sensitive(True)
         
     def onSaveChanges(self, button):
@@ -214,6 +229,8 @@ iface.low_color = builder.get_object("low_color")
 iface.text_color = builder.get_object("text_color")
 iface.bg_color = builder.get_object("bg_color")
 iface.apply_button = builder.get_object("apply_button")
+iface.left_pad_slider = builder.get_object("left_pad_slider")
+iface.right_pad_slider = builder.get_object("right_pad_slider")
 
 initIface()
 init = False

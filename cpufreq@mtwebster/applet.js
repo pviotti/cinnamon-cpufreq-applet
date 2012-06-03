@@ -65,7 +65,9 @@ let cpus_to_monitor = DEFAULT_CPUS;
 let text_color = '#FFFF80';
 let low_color = '#00FF00'; // green
 let mid_color = '#FFFF00'; // yellow
-let hi_color = '#FF0000'; // red
+let hi_color = '#FF0000'; // 
+let left_pad = 20;
+let right_pad = 20;
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
@@ -453,6 +455,9 @@ MyApplet.prototype = {
             try {
                 settings.readSettings();
                 this.myactor = new St.BoxLayout({ pack_start: true });
+                left_pad = settings.getString('Left Padding', '20');
+                right_pad = settings.getString('Right Padding', '20');
+                this.myactor.set_style('padding-left: ' + left_pad + 'px; padding-right: ' + right_pad + 'px;');
                 box = this.myactor;
                 this.actor.add(this.myactor);
 

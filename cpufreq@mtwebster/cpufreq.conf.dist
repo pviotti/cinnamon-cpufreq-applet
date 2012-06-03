@@ -10,3 +10,5 @@ Low Color,#00ff00
 Med Color,#ffff00
 High Color,#ff0000
 Text Color,#ffffff
+Left Padding, 20
+Right Padding, 20
