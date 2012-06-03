@@ -10,16 +10,7 @@ parsed_settings = []
 init=True
 # set defaults and initialize setting holders
 s = Namespace()
-s.disp_style = 2
-s.digit_type = 0
-s.cpus = 0
-s.refresh = 2000
-s.width = 4
-s.bg_color = "#ffffff"
-s.low_color = "#00ff00"
-s.medium_color = "#ffff00"
-s.high_color = "#ff0000"
-s.text_color = "#ffffff"
+
 
 iface = Namespace()
 
@@ -40,6 +31,19 @@ def rgbaToHexString(color):
     b = hex(int(round(color.blue*255)))[2:4]
     res = "#"+ r.zfill(2)+g.zfill(2)+b.zfill(2)
     return res
+
+def defaultSettings():
+    global s
+    s.disp_style = 2
+    s.digit_type = 0
+    s.cpus = 0
+    s.refresh = 2000
+    s.width = 4
+    s.bg_color = "#ffffff"
+    s.low_color = "#00ff00"
+    s.medium_color = "#ffff00"
+    s.high_color = "#ff0000"
+    s.text_color = "#ffffff"
 
 def readSettings(settings_file_path):
     global parsed_settings
@@ -115,49 +119,44 @@ def initSettings():
     s.text_color = getSetting("Text Color", "#ffffff")
 
 def initIface():
-    iface.cpu_display_combo = builder.get_object("cpu_display_combo")
+    global s
+    global iface
     iface.cpu_display_combo.set_active(s.cpus)
-    
-    iface.disp_style_combo = builder.get_object("disp_style_combo")
+    iface.cpu_display_combo.queue_draw()
     iface.disp_style_combo.set_active(s.disp_style)
-    
-    iface.show_combo = builder.get_object("show_combo")
+    iface.disp_style_combo.queue_draw()
     iface.show_combo.set_active(s.digit_type)
-    
-    iface.graph_width_slider = builder.get_object("graph_width_slider")
+    iface.show_combo.queue_draw()
     iface.graph_width_slider.set_value(s.width)
-    
-    iface.refresh_slider = builder.get_object("refresh_slider")
+    iface.graph_width_slider.queue_draw()
     iface.refresh_slider.set_value(s.refresh)
-    
-    iface.high_color = builder.get_object("high_color")
+    iface.refresh_slider.queue_draw()
     iface.high_color.set_rgba(hexToRGBA(s.high_color))
-    
-    iface.med_color = builder.get_object("med_color")
+    iface.high_color.queue_draw()
     iface.med_color.set_rgba(hexToRGBA(s.medium_color))
-    
-    iface.low_color = builder.get_object("low_color")
+    iface.med_color.queue_draw()
     iface.low_color.set_rgba(hexToRGBA(s.low_color))
-    
-    iface.text_color = builder.get_object("text_color")
+    iface.low_color.queue_draw()
     iface.text_color.set_rgba(hexToRGBA(s.text_color))
-    
-    iface.bg_color = builder.get_object("bg_color")
+    iface.text_color.queue_draw()
     iface.bg_color.set_rgba(hexToRGBA(s.bg_color))
-    
-    iface.apply_button = builder.get_object("apply_button")
-
+    iface.bg_color.queue_draw()
 
 class Handler:
     def onDeleteWindow(self, *args):
         Gtk.main_quit(*args)
 
     def onDefaults(self, button):
-        global settings_file_path
-        initSettings()
-        writeSettings(settings_file_path)
+        global window
+        global iface
+        defaultSettings();
+        Handler.onSaveChanges(self, None);
         initIface()
         iface.apply_button.set_sensitive(False)
+        window.queue_draw()
+        while Gtk.events_pending():
+            Gtk.main_iteration_do(True)
+
         
     def onSettingChanged(self, *args):
         if init: return
@@ -201,9 +200,24 @@ applet_dir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 builder.add_from_file(applet_dir + "/settings.glade")
 
 window = builder.get_object("dialog1")
+defaultSettings()
 initSettings()
 builder.connect_signals(Handler())
+
 # set the initial state of my settings in the dialog
+
+iface.cpu_display_combo = builder.get_object("cpu_display_combo")
+iface.disp_style_combo = builder.get_object("disp_style_combo")
+iface.show_combo = builder.get_object("show_combo")
+iface.graph_width_slider = builder.get_object("graph_width_slider")
+iface.refresh_slider = builder.get_object("refresh_slider")
+iface.high_color = builder.get_object("high_color")
+iface.med_color = builder.get_object("med_color")
+iface.low_color = builder.get_object("low_color")
+iface.text_color = builder.get_object("text_color")
+iface.bg_color = builder.get_object("bg_color")
+iface.apply_button = builder.get_object("apply_button")
+
 initIface()
 init = False
 window.show_all()

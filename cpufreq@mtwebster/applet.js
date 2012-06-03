@@ -258,14 +258,11 @@ Panel_Indicator.prototype = {
     },
 
     _launch_settings: function () {
-        global.logError("sdfds");
         try {
             command = "python " + settings.applet_dir.get_child('settings.py').get_path();
-            global.logError(command);
             Main.Util.spawnCommandLine(command);
         } catch (e) { global.logError(e); }
-        
-    },
+    }
 };
 
 function CpufreqSelectorBase() {
