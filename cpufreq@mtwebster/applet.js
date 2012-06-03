@@ -187,9 +187,9 @@ Panel_Indicator.prototype = {
         this.add_menu_items();
 
         this.set_digit = digit_type == 0 ? function () {
-            this.digit.text = num_to_freq_panel(this._parent.avg_freq);
+            this.digit.text = ' ' + num_to_freq_panel(this._parent.avg_freq);
         } : function () {
-            this.digit.text = Math.round(this._parent.avg_freq / this._parent.max * 100) + ' %';
+            this.digit.text = ' ' + Math.round(this._parent.avg_freq / this._parent.max * 100) + '%';
         };
 
         this._onChange();
