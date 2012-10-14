@@ -71,7 +71,7 @@ let right_pad = 20;
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
-const height = Math.round(Panel.PANEL_ICON_SIZE * 4 / 5);
+let height = 22;
 const DEC_WHITE = 16777215;
 var Background = new Clutter.Color();
 
@@ -410,20 +410,20 @@ function add_cpus_frm_files(cpu_child) {
 
 
 
-function main(metadata, orientation) {
-    let myApplet = new MyApplet(orientation);
+function main(metadata, orientation, panel_height) {
+    let myApplet = new MyApplet(orientation, panel_height);
     return myApplet;
 }
 
-function MyApplet(orientation) {
-    this._init(orientation);
+function MyApplet(orientation, panel_height) {
+    this._init(orientation, panel_height);
 }
 
 MyApplet.prototype = {
         __proto__: Applet.Applet.prototype,
 
-        _init: function(orientation) {
-            Applet.Applet.prototype._init.call(this, orientation);
+        _init: function(orientation, panel_height) {
+            Applet.Applet.prototype._init.call(this, orientation, panel_height);
             try {
                     this.orientation = orientation;
                     this._initialize_settings();
@@ -454,6 +454,7 @@ MyApplet.prototype = {
 
             try {
                 settings.readSettings();
+                if (this._panelHeight) height = Math.floor(this._panelHeight - (this._panelHeight * .05));
                 this.myactor = new St.BoxLayout({ pack_start: true });
                 left_pad = settings.getString('Left Padding', '20');
                 right_pad = settings.getString('Right Padding', '20');
@@ -474,5 +475,9 @@ MyApplet.prototype = {
 
         on_panel_edit_mode_changed: function() {
             this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
+        },
+
+        on_panel_height_changed: function() {
+            this.rebuild();
         }
 };
