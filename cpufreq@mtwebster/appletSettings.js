@@ -163,7 +163,7 @@ AppletSettings.prototype = {
                 return def;
             }
             let res;
-            for (i=0; i < this.parsed_settings.length; i++) {
+            for (let i=0; i < this.parsed_settings.length; i++) {
                 if(key == this.parsed_settings[i][0]) {
                     res = this.parsed_settings[i]; 
                 }

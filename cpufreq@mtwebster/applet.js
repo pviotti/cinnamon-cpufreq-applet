@@ -22,6 +22,7 @@
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
+const Gdk = imports.gi.Gdk;
 const Clutter = imports.gi.Clutter;
 
 const PanelMenu = imports.ui.panelMenu;
@@ -73,7 +74,6 @@ const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
 let height = 22;
 const DEC_WHITE = 16777215;
-var Background = new Clutter.Color();
 
 //basic functions
 
@@ -152,13 +152,10 @@ Panel_Indicator.prototype = {
     },
 
     buildit: function() {
-
-        Background.from_string(background);
         this.actor.has_tooltip = true;
         this.actor.tooltip_text = this.name;
         this.actor.remove_style_class_name('panel-button');
         this.actor.add_style_class_name('cfs-panel-button');
-        this.color = new Clutter.Color();
         this.label = new St.Label({ text: this.name, style_class: 'cfs-label' });
 
         this.digit = new St.Label({ style_class: 'cfs-panel-value' });
@@ -194,19 +191,21 @@ Panel_Indicator.prototype = {
 
         this._onChange();
         this._parent.connect('cur-changed', Lang.bind(this, this._onChange));
-
     },
 
     _draw: function() {
-        if ((this.graph.visible || this.box.visible) == false) return;
+        if ((this.graph.visible || this.box.visible) == false) {
+            return;
+         }
         let [width, heigth] = this.graph.get_surface_size();
         let cr = this.graph.get_context();
         let value = this._parent.avg_freq / this._parent.max;
-        this.color.from_string(num_to_color(this._parent.avg_freq, this._parent.min, this._parent.max));
-        Clutter.cairo_set_source_color(cr, Background);
+        let [res, color] = Clutter.Color.from_string(background);
+        Clutter.cairo_set_source_color(cr, color);
         cr.rectangle(0, 0, width, height);
         cr.fill();
-        Clutter.cairo_set_source_color(cr, this.color);
+        [res, color] = Clutter.Color.from_string(num_to_color(this._parent.avg_freq, this._parent.min, this._parent.max));
+        Clutter.cairo_set_source_color(cr, color);
         cr.rectangle(0, height * (1 - value), width, height);
         cr.fill();
     },
@@ -260,7 +259,7 @@ Panel_Indicator.prototype = {
 
     _launch_settings: function () {
         try {
-            command = "python " + settings.applet_dir.get_child('settings.py').get_path();
+            let command = "python " + settings.applet_dir.get_child('settings.py').get_path();
             Main.Util.spawnCommandLine(command);
         } catch (e) { global.logError(e); }
     }
