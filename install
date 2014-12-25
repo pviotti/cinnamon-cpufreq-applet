@@ -32,7 +32,7 @@ else
 fi
 
 # mkdir -p "${prefix}/${usr_dir}/share/cinnamon/extensions"
-cp -vr "${srcdir}/${uuid}" "/home/mtwebster/.local/share/cinnamon/applets/"
+cp -vr "${srcdir}/${uuid}" "~/.local/share/cinnamon/applets/"
 # mkdir -p "${prefix}/${usr_dir}/bin"
 
 #mkdir -p "${prefix}/${usr_dir}/share/glib-2.0/schemas"

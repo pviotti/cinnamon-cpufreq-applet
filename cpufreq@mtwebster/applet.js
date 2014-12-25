@@ -19,17 +19,17 @@
 // Author: Yichao Yu
 // Email: yyc1992@gmail.com
 
+// Port to Cinnamon by Michael Webster
+// Fix for intel_pstate driver by Paolo Viotti
+
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
-const Gdk = imports.gi.Gdk;
 const Clutter = imports.gi.Clutter;
 
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Main = imports.ui.main;
-const Panel = imports.ui.panel;
-
 const Util = imports.misc.util;
 const FileUtils = imports.misc.fileUtils;
 
@@ -38,12 +38,10 @@ const Mainloop = imports.mainloop;
 const Signals = imports.signals;
 const Cinnamon = imports.gi.Cinnamon;
 const Applet = imports.ui.applet;
-const UUID = 'cpufreq@mtwebster';
-const AppletDir = imports.ui.appletManager.applets[UUID];
-const AppletSettings = AppletDir.appletSettings;
+const Settings = imports.ui.settings;
 
 let start = GLib.get_monotonic_time();
-let settings = {};
+
 let cpus = [];
 let selectors = [];
 let box;
@@ -67,8 +65,6 @@ let text_color = '#FFFF80';
 let low_color = '#00FF00'; // green
 let mid_color = '#FFFF00'; // yellow
 let hi_color = '#FF0000'; // 
-let left_pad = 20;
-let right_pad = 20;
 
 const cpu_path = '/sys/devices/system/cpu/';
 const cpu_dir = Gio.file_new_for_path(cpu_path);
@@ -116,9 +112,9 @@ function percent_to_hex(str, num) {
     return str.format(Math.min(Math.floor(num * 256), 255)).replace(' ', '0');
 }
 function num_to_color(num, min, max) {
-    if (num >= max-1000) // max-101 is because on at least my machine there is a max of 2.401, next step is 2.4
-        return hi_color; // I'm guessing the 2.401 is for turbo boost? (i7)  so this is to ensure 'hi' level
-    if (num == min)     // at the 'normal' hi (i.e. 2.4)
+    if (num >= max-150000)
+        return hi_color;
+    if (num <= min+100000)
         return low_color;
     return mid_color;
 }
@@ -133,22 +129,7 @@ Panel_Indicator.prototype = {
         PanelMenu.Button.prototype._init.call(this, 0.0);
         this.name = name
         this._parent = parent;
-
-        let a = this.initSettings();
         this.buildit();
-    },
-
-    initSettings: function() {
-        background = settings.getString('Background','#FFFF80');
-        cpus_to_monitor = parseInt(settings.getString('CPUs to Monitor', DEFAULT_CPUS));
-        refresh_time = parseInt(settings.getString('Refresh Time', '2000'));
-        style = parseInt(settings.getString('Display Style', DEFAULT_STYLE));
-        graph_width = parseInt(settings.getString('Graph Width', '6'));
-        digit_type = parseInt(settings.getString('Digit Type', DEFAULT_DIGIT_TYPE));
-        text_color = settings.getString('Text Color', '#FFFF80');
-        low_color = settings.getString('Low Color', '#00FF00');
-        mid_color = settings.getString('Med Color', '#FFFF00');
-        hi_color = settings.getString('High Color', '#FF0000');
     },
 
     buildit: function() {
@@ -170,11 +151,8 @@ Panel_Indicator.prototype = {
 
         this.label.visible = false; // override for now - show-text
 
-
         this.graph.visible = style == 0 || style == 2;
         this.digit.visible = style == 1 || style == 2;
-        
-        
         this.graph.width = graph_width;
 
         this.box.add_actor(this.label);
@@ -222,7 +200,7 @@ Panel_Indicator.prototype = {
 
     add_menu_items: function() {
         this.menu_items = [];
-        for (let i in this._parent.avail_freqs) {
+        /*for (let i in this._parent.avail_freqs) {
             let menu_item = new PopupMenu.PopupBaseMenuItem(null, {reactive: true});
             let val_label = new St.Label({ text: num_to_freq(this._parent.avail_freqs[i]) });
             menu_item.id = i;
@@ -230,8 +208,8 @@ Panel_Indicator.prototype = {
             menu_item.addActor(val_label);
             this.menu.addMenuItem(menu_item);
             this.menu_items.push(menu_item);
-        }
-        this._parent.avail_freqs.length && this._parent.avail_governors.length &&
+        }*/
+        /*this._parent.avail_freqs.length &&*/ this._parent.avail_governors.length &&
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         for (let i in this._parent.avail_governors) {
             let menu_item = new PopupMenu.PopupBaseMenuItem(null, {reactive: true});
@@ -247,22 +225,26 @@ Panel_Indicator.prototype = {
                 this._parent.set(item.type ,item.id);
             }));
         }
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
-        let config_menu_item = new PopupMenu.PopupBaseMenuItem(null, {reactive: true});
-        let config_icon = new St.Icon({icon_name: "system-run", icon_size: 16, icon_type: St.IconType.SYMBOLIC});
-        config_menu_item.addActor(config_icon);
-        config_menu_item.connect('activate', Lang.bind(this, this._launch_settings));
-        this.menu.addMenuItem(config_menu_item);
-
     },
 
-    _launch_settings: function () {
-        try {
-            let command = "python " + settings.applet_dir.get_child('settings.py').get_path();
-            Main.Util.spawnCommandLine(command);
-        } catch (e) { global.logError(e); }
-    }
+    _onButtonPress: function(actor, event) {
+        if (global.settings.get_boolean("panel-edit-mode"))
+            return false;
+        if (event.get_button()==3){
+            return false;
+        }
+        if (!this.menu.isOpen) {
+            // Setting the max-height won't do any good if the minimum height of the
+            // menu is higher then the screen; it's useful if part of the menu is
+            // scrollable so the minimum height is smaller than the natural height
+            let monitor = Main.layoutManager.primaryMonitor;
+            this.menu.actor.style = ('max-height: ' +
+                                     Math.round(monitor.height - Main.panel.actor.height) +
+                                     'px;');
+        }
+        this.menu.toggle();
+        return true;
+    },
 };
 
 function CpufreqSelectorBase() {
@@ -282,10 +264,20 @@ CpufreqSelectorBase.prototype = {
     },
 
     get_avail: function() {
-        this.max = rd_nums_frm_file(this.cpufreq_path + '/scaling_max_freq')[0];
-        this.min = rd_nums_frm_file(this.cpufreq_path + '/scaling_min_freq')[0];
-        this.avail_freqs = rd_nums_frm_file(this.cpufreq_path + '/scaling_available_frequencies');
-        this.avail_governors = rd_frm_file(this.cpufreq_path + '/scaling_available_governors');
+        try {
+            this.max = rd_nums_frm_file(this.cpufreq_path + '/scaling_max_freq')[0];
+            this.min = rd_nums_frm_file(this.cpufreq_path + '/scaling_min_freq')[0];
+            /*this.avail_freqs = rd_nums_frm_file(this.cpufreq_path + '/scaling_available_frequencies');*/
+            this.avail_governors = rd_frm_file(this.cpufreq_path + '/scaling_available_governors');
+        } catch (e) {
+            let icon = new St.Icon({ icon_name: 'error',
+                             icon_type: St.IconType.FULLCOLOR,
+                             icon_size: 36 });
+            /*Main.criticalNotify("CPU frequency scaling unavailable",
+                                "Your system does not appear to support CPU frequency scaling.  Unfortunately this applet is of no use to you.",
+                                icon);*/
+             Main.criticalNotify("Error", e.message, icon);
+        }
     },
 
     get_cur: function() {
@@ -324,17 +316,17 @@ CpufreqSelector.prototype = {
             let selector = selectors[i];
             this.max += selector.max;
             this.min += selector.min;
-            for (let j in selector.avail_freqs)
-                freqs[selector.avail_freqs[j]] = 1;
+            /*for (let j in selector.avail_freqs)
+                freqs[selector.avail_freqs[j]] = 1;*/
             for (let j in selector.avail_governors)
                 governors[selector.avail_governors[j]] = 1;
         }
         this.max /= selectors.length;
         this.min /= selectors.length;
-        this.avail_freqs = [];
+        //this.avail_freqs = [];
         this.avail_governors = [];
-        for (let freq in freqs)
-            this.avail_freqs.push(freq);
+        /*for (let freq in freqs)
+            this.avail_freqs.push(freq);*/
         for (let governor in governors)
             this.avail_governors.push(governor);
     },
@@ -365,79 +357,154 @@ CpufreqSelector.prototype = {
     },
 };
 
-
-Signals.addSignalMethods(this);
-
 function add_cpus_frm_files(cpu_child) {
     try {
-    let pattern = /^cpu[0-9]+/
-    for (let i in cpu_child)
-        if (pattern.test(cpu_child[i].get_name()))
-            cpus.push(cpu_child[i].get_name());
-    for (let i in cpus) {
-        selectors[i] = new CpufreqSelectorBase(cpus[i]);
-        box.add_actor(selectors[i].indicator.actor);
-        Main.panel._menus.addMenu(selectors[i].indicator.menu);
-    }
-    summary = new CpufreqSelector('cpu');
-    box.add_actor(summary.indicator.actor);
-    Main.panel._menus.addMenu(summary.indicator.menu);
-    let visible = [];
-    for (let i in selectors)
-        visible[i] = true;
-    visible[-1] = true;
-    switch (cpus_to_monitor) {
-        case 0:
-            break;
-        case 2:
-            for (let i = 0; i < visible.length; i++) {
-                visible[i] = false;
-            }
-            break;
-        case 1:
-            visible[-1] = false;
-            break;
-    }
-    for (let i in selectors)
-        selectors[i].indicator.actor.visible = visible[i];
-    summary.indicator.actor.visible = visible[-1];
+        let pattern = /^cpu[0-9]+/
+        for (let i in cpu_child)
+            if (pattern.test(cpu_child[i].get_name()))
+                cpus.push(cpu_child[i].get_name());
+        for (let i in cpus) {
+            selectors[i] = new CpufreqSelectorBase(cpus[i]);
+            box.add_actor(selectors[i].indicator.actor);
+            Main.panel._menus.addMenu(selectors[i].indicator.menu);
+        }
+        summary = new CpufreqSelector('cpu');
+        box.add_actor(summary.indicator.actor);
+        Main.panel._menus.addMenu(summary.indicator.menu);
+        let visible = [];
+        for (let i in selectors)
+            visible[i] = true;
+        visible[-1] = true;
+        switch (cpus_to_monitor) {
+            case 0:
+                break;
+            case 2:
+                for (let i = 0; i < visible.length; i++) {
+                    visible[i] = false;
+                }
+                break;
+            case 1:
+                visible[-1] = false;
+                break;
+        }
+        for (let i in selectors)
+            selectors[i].indicator.actor.visible = visible[i];
+        summary.indicator.actor.visible = visible[-1];
     } catch (e) {
         global.logError(e);
     }
     atomic=false;
 }
 
-
-
-function main(metadata, orientation, panel_height) {
-    let myApplet = new MyApplet(orientation, panel_height);
+function main(metadata, orientation, panel_height, instance_id) {
+    let myApplet = new MyApplet(metadata, orientation, panel_height, instance_id);
     return myApplet;
 }
 
-function MyApplet(orientation, panel_height) {
-    this._init(orientation, panel_height);
+function MyApplet(metadata, orientation, panel_height, instance_id) {
+    this._init(metadata, orientation, panel_height, instance_id);
 }
 
 MyApplet.prototype = {
         __proto__: Applet.Applet.prototype,
 
-        _init: function(orientation, panel_height) {
-            Applet.Applet.prototype._init.call(this, orientation, panel_height);
+        _init: function(metadata, orientation, panel_height, instance_id) {
+            Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
             try {
+                    this.uuid = metadata['uuid'];
                     this.orientation = orientation;
+                    this.instance_id = instance_id;
                     this._initialize_settings();
+                    this.config_menu_item = new Applet.MenuItem("Configure Applet", 'system-run-symbolic',
+                                                    Lang.bind(this, this._on_open_settings));
+                    this._applet_context_menu.addMenuItem(this.config_menu_item);
                     this.rebuild();
+                    Main.themeManager.connect('theme-set', Lang.bind(this, function() {
+                        Mainloop.timeout_add(500, Lang.bind(this, this.rebuild));
+                    }));
+
+                    if (!GLib.find_program_in_path("cpufreq-selector")) {
+                        let icon = new St.Icon({ icon_name: 'error',
+                                                 icon_type: St.IconType.FULLCOLOR,
+                                                 icon_size: 36 });
+                        Main.criticalNotify("CPU frequency switcher program not installed",
+                                "You appear to be missing the required program, 'cpufreq-selector.'  This program is needed to perform scaling or governor switching.\n\n" +
+                                "This program is ordinarily provided by the package: gnome-applets\n\n" +
+                                "If you're on Linux Mint or Ubuntu, you can install this using the following command:\n\n" +
+                                "apt install --no-install-recommends gnome-applets",
+                                icon);
+                    }
             } catch (e) {
                 global.logError(e);
             }
         },
 
         _initialize_settings: function() {
-            settings = new AppletSettings.AppletSettings(UUID, 'cpufreq.conf.dist', 'cpufreq.conf');
-            settings.connect('settings-file-changed', Lang.bind(this, this.rebuild));
+            this.settings = new Settings.AppletSettings(this, this.uuid, this.instance_id);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "display-style",
+                                       "style",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "digit-type",
+                                       "digit_type",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "cpus-to-monitor",
+                                       "cpus",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "refresh-rate",
+                                       "refresh_rate",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "graph-width",
+                                       "graph_width",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "background",
+                                       "background",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "low-color",
+                                       "low_color",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "med-color",
+                                       "med_color",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "high-color",
+                                       "high_color",
+                                       this.rebuild,
+                                       null);
+            this.settings.bindProperty(Settings.BindingDirection.IN,
+                                       "text-color",
+                                       "text_color",
+                                       this.rebuild,
+                                       null);
         },
 
         rebuild: function() {
+            background = this.background;
+            cpus_to_monitor = this.cpus;
+            refresh_time = this.refresh_rate;
+            style = this.style;
+            graph_width = this.graph_width
+            digit_type = this.digit_type;
+            text_color = this.text_color;
+            low_color = this.low_color;
+            mid_color = this.med_color;
+            hi_color = this.high_color;
+
             if (atomic)
                 return;
             atomic = true; // hackity hack - make sure only one rebuild is happening at a time,
@@ -452,17 +519,11 @@ MyApplet.prototype = {
             }
 
             try {
-                settings.readSettings();
-                if (this._panelHeight) height = Math.floor(this._panelHeight - (this._panelHeight * .05));
+                if (this._panelHeight)
+                    height = Math.floor(this._panelHeight - (this._panelHeight * .05));
                 this.myactor = new St.BoxLayout({ pack_start: true });
-                left_pad = settings.getString('Left Padding', '20');
-                right_pad = settings.getString('Right Padding', '20');
-                this.myactor.set_style('padding-left: ' + left_pad + 'px; padding-right: ' + right_pad + 'px;');
                 box = this.myactor;
                 this.actor.add(this.myactor);
-
-                this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
-                global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
 
                 FileUtils.listDirAsync(cpu_dir, Lang.bind(this, add_cpus_frm_files));
                 let finish = GLib.get_monotonic_time();
@@ -472,11 +533,16 @@ MyApplet.prototype = {
             }
         },
 
-        on_panel_edit_mode_changed: function() {
-            this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
-        },
-
         on_panel_height_changed: function() {
             this.rebuild();
+        },
+
+        _on_open_settings: function () {
+        try {
+            let command = "cinnamon-settings applets " + this.uuid;
+            Main.Util.spawnCommandLine(command);
+        } catch (e) {
+            global.logError(e);
         }
+    },
 };
