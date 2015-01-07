@@ -95,7 +95,7 @@ function num_to_freq_panel(num) {
     if (num < 1000000)
         return Math.round(num / 10) / 100 + ' MHz';
     if (num < 1000000000)
-        return Math.round(num / 10000) / 100 + ' GHz';
+        return (Math.round(num / 10000) / 100).toFixed(2) + ' GHz';
     return Math.round(num / 10000000) / 100 + ' THz';
 }
 function num_to_freq(num) {
